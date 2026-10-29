@@ -1,0 +1,203 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1.1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\title{From Relation to Node:\\[0.3em]
+\large Minimal Conditions for the Emergence of Grounded Symbolic Graphs,\\
+with a Machine-Verified Formalization in Lean~4}
+% TODO: author name
+\author{}
+\date{Draft, \today}
+
+\begin{document}
+
+\maketitle
+
+% TODO: abstract, once the later sections are drafted.
+
+\section{Motivation and Background}
+
+\subsection{The originary hypothesis}
+
+Eric Gans's Generative Anthropology proposes that language, and with it the
+distinctively human forms of culture, originated in a single kind of event: the
+\emph{originary scene} \cite{Gans1981,Gans1993}. In Gans's account, a group of
+hominids converge, through mimetic desire, on a single desirable object. Mutual
+imitation intensifies their rivalry beyond what an animal dominance hierarchy can
+contain, and the group faces a violent crisis. The crisis is deferred when the
+gesture of appropriation is aborted. The aborted gesture, shared and reciprocally
+understood, becomes the first sign: an \emph{ostensive} that designates the object
+as a centre which no one may take. The scene concludes in the \emph{sparagmos},
+the collective division of the object.
+
+From the ostensive, Gans derives the further elementary forms of language in
+sequence. The \emph{imperative} arises from an ostensive made in the absence of its
+referent, which the hearer answers by supplying the missing object. The
+\emph{declarative} arises when the imperative cannot be fulfilled, and the hearer
+preserves the relation symbolically instead. Later work in the tradition, notably
+by Adam Katz, develops related notions, among them the \emph{centre} toward which
+the attention of a scene converges, and the \emph{firstness} of the participant who
+defers first.
+% TODO: add a reference for Katz on the centre and on firstness.
+
+The ambition of the theory is captured in its name. It is \emph{generative}: it
+claims to derive complex linguistic and cultural forms from a minimal beginning.
+Gans presents the originary hypothesis as a minimal one, positing a single event
+and asking what must follow from it \cite{Gans1993,Katz2007}.
+
+\subsection{The problem: narrative content of uncertain necessity}
+
+This work grows out of a long engagement with Gans's writings and those of Adam
+Katz, and out of a persistent dissatisfaction with one feature of the account. The
+originary scene is not only a logical structure. It is also a story, and the story
+has specific content: mimetic desire as the source of convergence on the object,
+mimetic rivalry as the source of crisis, the prospect of catastrophic violence as
+what compels deferral, a sacred centre, and a sparagmos that resolves the scene by
+division. This content is inherited in part from Ren\'e Girard's mimetic theory
+\cite{Girard1977}. Each element is anthropologically suggestive, and each ties the
+origin of language to themes the theory develops elsewhere, such as the sacred,
+ethics and exchange.
+
+It is not evident, however, which of these elements the derivation of the sign and
+its forms actually requires. Several are open to objection on their own terms.
+Violence among humans and other animals is common and rarely catastrophic; disputes
+end through exhaustion or through hierarchy without producing signs. Refraining from
+an object one wants is, on ordinary assumptions about preference, a losing strategy,
+so a deferral that is supposed to be motivated by self-interest needs further
+explanation. And a collective division of the object adds a stage whose necessity
+for the emergence of reference is unclear. Much of the narrative therefore appears
+arbitrary relative to what it is meant to explain.
+
+The issue is not whether these elements are plausible. It is whether they are
+\emph{load-bearing}. If the derivation depends on them, it inherits their
+contingency and takes on the character of a just-so story. If it does not, it
+should be possible to state the derivation without them, and doing so would show
+what the generative core of the theory actually is.
+
+\subsection{Aim: minimal conditions for generativity}
+
+The present work attempts to separate that core from its narrative content. Its aim
+is to identify a minimal set of assumptions under which it can be \emph{proved} that
+symbolic structure arises from conditions in which it is absent, and to make every
+assumption explicit. Generativity is given three precise senses:
+
+\begin{description}[leftmargin=1.5em, style=nextline]
+  \item[Existence.] There is a model of the assumptions in which the structure arises
+    from a prior state that lacks it.
+  \item[Necessity.] In every model of the assumptions, whenever the structure exists,
+    it has a determinate origin and order.
+  \item[Universality.] The operations that produce the first symbolic structures
+    suffice to produce any finite structure of the relevant kind.
+\end{description}
+
+\noindent The aim is not to show that such emergence was inevitable, nor that it
+happened in one particular way. It is to show that emergence is possible under weak
+conditions, and that its form is constrained by those conditions.
+
+\subsection{Why graphs}
+
+The structure whose emergence is at issue is taken to be relational structure in
+general, in the form of graphs. Any finite relational system can be represented as a
+graph. Relations among more than two terms can be encoded by an incidence
+construction, in which each relation instance becomes a node joined to its
+arguments. The question of how language begins is therefore approached
+structurally. Consider a world that contains physical objects and physical
+relations among them, but no symbolic nodes. How can symbolic nodes, and relations
+among them, arise in such a world? Physical objects are assumed. Symbolic nodes are
+not.
+
+This framing makes precise a specific hypothesis that motivated the work: that
+\begin{itemize}[nosep]
+  \item the ostensive establishes a contextual relation, an edge;
+  \item the imperative attempts to complete an unsatisfied relation;
+  \item the declarative yields an independently representable symbolic object, a node.
+\end{itemize}
+One outcome of the formalization is a sharper version of this hypothesis. The first
+symbolic node is best understood as a \emph{reified relation}: a relation that has
+itself become something one can refer to. Relations between nodes, in turn, arise by
+the same operation applied one level up.
+
+\subsection{Rival orderings}
+
+A further motivation is comparative. The sequence ostensive, imperative, declarative
+is one reading among several. Other interpretations, for instance accounts that give
+priority to the declarative, plausibly license themselves within their own axioms:
+each ordering may be derivable once suitable assumptions are made. If so, the
+substantive question is not which ordering is correct in the abstract. It is which
+assumptions each ordering requires, and how plausible those assumptions are. A
+framework in which every assumption is explicit allows such alternatives to be
+compared on equal terms. The present work develops one such framework and records,
+for each result, the assumptions on which it depends.
+
+\subsection{Why machine verification}
+
+Arguments in humanistic theory often rely on steps that are intuitively compelling
+but unstated. Formalization in a proof assistant forces every assumption to be
+written down and every inference to be checked. All results reported here are
+formalized in the Lean~4 proof assistant \cite{deMoura2021} and checked in full, with
+no unproven steps.
+
+The process was itself informative. Several assumptions that the informal narrative
+leaves implicit were exposed only when a proof failed without them. Among them:
+\begin{itemize}[nosep]
+  \item a kinematic principle linking a reproduced gesture to the object it was
+    originally directed at;
+  \item the requirement that one participant defer before another, which corresponds
+    to Katz's firstness;
+  \item the dependence of falsehood on the drift of signs away from their iconic
+    origins;
+  \item the reliance of affirmation, derived as the negation of a negation, on
+    classical logic.
+\end{itemize}
+Formalization also makes it possible to say exactly which statements are derived
+and which are merely definitions. The paper marks this distinction throughout.
+
+\subsection{Outline}
+
+% TODO: revise once the later sections are drafted.
+Section~2 introduces the primitives and axioms, which concern only bodies, movements,
+reach and resemblance. Section~3 defines taking-as, the centre and the elementary
+modes as patterns of response. Section~4 reports the structural results that hold in
+every model. Section~5 reports the existence and universality results. Section~6
+discusses the results, their relation to Generative Anthropology, and directions for
+further work.
+
+\begin{thebibliography}{9}
+
+\bibitem{deMoura2021}
+L.~de Moura and S.~Ullrich.
+\newblock The Lean 4 theorem prover and programming language.
+\newblock In \emph{Automated Deduction -- CADE 28}, Lecture Notes in Computer
+  Science 12699, pages 625--635. Springer, 2021.
+
+\bibitem{Gans1981}
+E.~Gans.
+\newblock \emph{The Origin of Language: A Formal Theory of Representation}.
+\newblock University of California Press, Berkeley, 1981.
+
+\bibitem{Gans1993}
+E.~Gans.
+\newblock \emph{Originary Thinking: Elements of Generative Anthropology}.
+\newblock Stanford University Press, Stanford, 1993.
+
+\bibitem{Girard1977}
+R.~Girard.
+\newblock \emph{Violence and the Sacred}.
+\newblock Translated by P.~Gregory. Johns Hopkins University Press, Baltimore, 1977.
+
+% TODO: verify this reference.
+\bibitem{Katz2007}
+A.~Katz, editor.
+\newblock \emph{The Originary Hypothesis: A Minimal Proposal for Humanistic
+  Inquiry}.
+\newblock The Davies Group, Aurora, CO, 2007.
+
+\end{thebibliography}
+
+\end{document}
