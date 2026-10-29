@@ -1,0 +1,13 @@
+import GaEmergence.Basic
+import GaEmergence.Theorems
+import GaEmergence.Models
+import GaEmergence.Originary
+import GaEmergence.Behaviour
+import GaEmergence.Retention
+import GaEmergence.Center
+import GaEmergence.Completion
+import GaEmergence.Fit
+import GaEmergence.Falsehood
+import GaEmergence.Graphs
+import GaEmergence.Roles
+import GaEmergence.Polarity

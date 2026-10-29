@@ -1,0 +1,964 @@
+\documentclass[11pt]{article}
+
+\usepackage[left=1in, right=2.1in, top=1in, bottom=1in, marginparwidth=1.65in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage[textsize=scriptsize]{todonotes}
+\usepackage{xurl}
+\usepackage[hidelinks]{hyperref}
+\setlength{\emergencystretch}{3em}
+
+% Passages drafted with AI assistance and not yet checked against their sources.
+% List them all with: grep -n unverified whitepaper.tex
+\newcommand{\unverified}[1]{%
+  \todo[color=orange!25, bordercolor=orange!70!black, linecolor=orange!70!black]{%
+    \textbf{Unverified (AI-drafted).} #1}}
+
+\title{From Relation to Node:\\[0.3em]
+\large Minimal Conditions for the Emergence of Grounded Symbolic Graphs,\\
+with a Machine-Verified Formalization in Lean~4}
+% TODO: author name
+\author{}
+\date{Draft, \today}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\linewidth}{\small
+\textbf{Status.} This document is a work in progress. It is incomplete, and all of its
+parts, including the axioms, definitions, results and their interpretation, are subject
+to revision and refinement. Passages marked in the margin were drafted with AI
+assistance and have not yet been checked against their sources.}}
+\end{center}
+
+\vspace{1em}
+\begin{flushright}
+\emph{Mysteries should not be multiplied beyond necessity.}\\[0.2em]
+--- Eric Gans, \emph{The Origin of Language} (1981)
+\end{flushright}
+
+% TODO: abstract, once the later sections are drafted.
+
+\section{Motivation and Background}
+
+\subsection{Theories of language origin}
+
+Theories of language origin attempt to explain how a species without language came to
+have it. The field is broad. Among its main families are the following.
+\begin{itemize}[nosep]
+  \item Gestural accounts, on which language grew out of manual communication and
+    pantomime \cite{Corballis2002,Arbib2012}.
+  \item Social accounts, on which language took over the role of grooming in maintaining
+    group bonds \cite{Dunbar1996}.
+  \item Intention-based accounts, which ground meaning in the expression and recognition
+    of communicative intentions \cite{Grice1957,Tomasello2008}.
+  \item Game-theoretic accounts, in which signals acquire meaning as stable conventions
+    among interacting agents \cite{Lewis1969,Skyrms2010}.
+  \item Computational accounts, which locate the decisive step in the appearance of a
+    single combinatorial operation \cite{BerwickChomsky2016}.
+\end{itemize}
+Two problems recur across these families, and they help explain why the question of
+language origin has often been treated with suspicion.
+
+\paragraph{Presupposition.}
+Many accounts take as given, in some form, capacities closely related to the ones whose
+origin is at issue. This is not always an oversight; often it is a deliberate choice of
+what is to be explained. Three examples illustrate the point.
+
+\begin{itemize}
+  \item \emph{Game-theoretic accounts.} Lewis--Skyrms signaling games show how signals
+    can acquire meaning without design or prior agreement. Skyrms extends the framework
+    so that agents begin with no signals at all and invent new ones through a
+    reinforcement process \cite{Skyrms2010,AlexanderSkyrmsZabell2012}. What these models
+    take as given is the interaction itself: a sender whose behaviour depends on a state
+    of the world, a receiver whose action depends on the sender's behaviour, and payoffs
+    that reward a match. The models explain which behaviour comes to mean which state.
+    That one participant's behaviour is the kind of thing the other's action responds to
+    \emph{as} a signal is the frame within which they work.
+  \item \emph{Intention-based accounts.} These analyze meaning through the expression
+    and recognition of communicative intentions \cite{Grice1957}. As analyses of
+    meaning, they are not committed to any story of origin. As a basis for one, they
+    inherit the observation that an intention to communicate is itself a
+    representational state, so that thought is presupposed prior to language.%
+    \unverified{The thought-priority objection to intention-based accounts needs a
+    citation. A candidate is Devitt, ``Three Mistakes About Semantic Intentions''.}
+    Tomasello's account is explicit on this point. It posits shared intentionality,
+    joint attention and cooperative motives as a biological infrastructure that evolved
+    before conventional language and made it possible \cite{Tomasello2008}. The question
+    of reference is moved to the evolution of that infrastructure, not answered from
+    nothing.
+  \item \emph{Computational accounts.} Berwick and Chomsky locate the decisive innovation
+    in a single combinatorial operation, Merge, and explain how hierarchical structure
+    is built from lexical atoms \cite{BerwickChomsky2016}. They accept that words
+    preceded grammar, and critics have pointed out that the origin of those atoms is left
+    largely unaddressed \cite{StuddertKennedyTerrace2017}.
+\end{itemize}
+
+None of these observations is a refutation. Each account addresses its own question, and
+every model must take something as given, including the one developed here, which
+assumes perception and response. The point concerns where the line is drawn. In each
+case, the step by which some piece of behaviour first comes to \emph{stand for} something
+is not part of what is explained.
+
+\paragraph{Evidence.}
+Language leaves no fossils. The events in question are prehistoric, unobservable and
+unrepeatable, and the indirect evidence from anatomy, archaeology, comparative cognition
+and genetics constrains them only weakly. In 1866 the Soci\'et\'e de Linguistique de
+Paris went as far as to exclude communications on the origin of language from its
+proceedings \cite{Lyons1991}. Much more recently, a review by leading researchers
+concluded that the central questions remain largely out of reach of the available
+evidence \cite{Hauser2014}. Theories of origin are therefore often regarded as
+untestable, and dismissed as just-so stories: narratives that fit what they explain, but
+that no observation could refute.
+
+These two problems point toward a particular kind of contribution. A theory of origin
+that cannot be tested historically may still be assessed in another way: by asking
+whether its conclusions \emph{follow} from its assumptions, and which assumptions they
+require. A claim of the form ``if these conditions hold, this structure can arise'', or
+``must have this form'', is not a claim about what happened. It can be checked
+deductively, and its assumptions can then be examined individually, some of them
+empirically, for plausibility. This does not make an origin story testable as history. It
+makes it accountable as an argument.
+
+\paragraph{The originary hypothesis.}
+Eric Gans's Generative Anthropology is notable for addressing the first problem
+directly, and in a way that lends itself to this kind of assessment
+\cite{Gans1981,Gans1993}. Several features distinguish it.
+\begin{enumerate}
+  \item It starts from the sign itself. It asks what must happen for a sign to exist at
+    all, not how pre-existing contents come to be communicated.
+  \item It derives the sign from non-semiotic behaviour. On Gans's account, the first
+    sign is an aborted gesture of appropriation: a practical act that, by being
+    interrupted, comes to designate instead of to seize. This gives a concrete mechanism
+    by which representation could arise without being presupposed.
+  \item The sign is shared from the outset. It arises in a scene among several
+    participants, as a mutually understood gesture, so meaning is not a private state
+    later made public.
+  \item It is generative. A single minimal hypothesis is followed by a derivation of
+    further elementary forms of language in sequence. A claimed derivation has internal
+    structure that can be examined step by step.
+\end{enumerate}
+\emph{The Origin of Language} opens with the sentence ``Mysteries should not be
+multiplied beyond necessity'' \cite{Gans1981}. It is a version of Ockham's razor, and it
+states the ambition of the theory: to explain the origin of the human while assuming as
+little as possible.
+
+The hypothesis runs as follows. A group of hominids converge, through mimetic desire, on
+a single desirable object. Mutual imitation intensifies their rivalry beyond what an
+animal dominance hierarchy can contain,%
+\unverified{The role of the dominance hierarchy in Gans's scene has not been confirmed
+in a source. Check Gans 1981 or 1993.}
+and the group faces a violent crisis. The crisis is deferred when the gesture of
+appropriation is aborted. The aborted gesture, shared and reciprocally understood,
+becomes the first sign: an \emph{ostensive} that designates the object as a centre which
+no one may take. The scene concludes in the \emph{sparagmos}, the collective division of
+the object.
+
+From the ostensive, Gans derives the further forms in sequence. The \emph{imperative}
+arises from an ostensive made in the absence of its referent, which the hearer answers by
+supplying the missing object. The \emph{declarative} arises when the imperative cannot be
+fulfilled, and the hearer responds with a negation of the object's presence.%
+\unverified{This summary of the imperative (the ``inappropriate ostensive'') and the
+declarative (the negative ostensive) was confirmed only through secondary commentary.
+Check against Gans 1981.}
+
+Later work in the tradition develops related notions. Adam Katz, who also writes as
+Dennis Bouvard, introduced into the originary scene the \emph{firstness} of a single
+participant who emits the sign before the others \cite{Katz2005}; see also
+\cite{Gans2007}. He has also developed an approach organized around the \emph{centre}
+toward which the attention of a scene converges.%
+\unverified{Katz on the centre has not been read directly. A candidate source is Katz,
+``Generative Anthropology as the One Big Discipline'', \emph{Anthropoetics} XXIV, no.~2
+(2019).}
+
+\subsection{The problem: narrative content of uncertain necessity}
+
+The present work grows out of a long engagement with the writings of Gans and Katz, and
+out of a specific dissatisfaction with one feature of the account. Gans's hypothesis
+avoids presupposing the sign. The scene that does this work, however, carries
+substantial narrative content:
+\begin{itemize}[nosep]
+  \item \emph{convergence}: mimetic desire draws the participants to a single object;
+  \item \emph{crisis}: mimetic rivalry exceeds what an animal dominance hierarchy can
+    contain;
+  \item \emph{deferral}: the prospect of violence motivates the abortion of the gesture
+    of appropriation;
+  \item \emph{centre}: the designated object becomes a sacred centre;
+  \item \emph{resolution}: the scene ends in the sparagmos, in which the tension the sign
+    has deferred is discharged on the object, not on other members of the group.%
+    \unverified{This description of the sparagmos comes from an \emph{Anthropoetics}
+    page whose author has not been confirmed. Find a citable source.}
+\end{itemize}
+Much of this content is inherited from Ren\'e Girard's mimetic theory
+\cite{Girard1977}. Gans accepts that language originates in a mimetic crisis, while
+rejecting the scapegoat mechanism as sufficient to produce a sign. The sparagmos is in
+part his way of incorporating Girard's account of sacrificial violence.%
+\unverified{The relation between Gans and Girard summarized here has been confirmed
+only through an encyclopedia entry. Find a primary or scholarly source.}
+Each element is anthropologically suggestive, and each ties the origin of language to
+themes the theory develops elsewhere, such as the sacred, ritual, ethics and exchange.
+
+Which of these elements is actually needed is a natural question for an account that
+begins by refusing to multiply mysteries. It has been raised within the tradition itself.
+Sackeroff, for example, identifies the mechanism of deferral as a point of difficulty,
+observing that the account draws on two different sources of motivation: animal
+appetite for the object, and a distinctively human investment in the sign
+\cite{Sackeroff2015}.%
+\unverified{The issue number of Sackeroff's article was inferred from its URL. Confirm.}
+The present work takes up this internal question in a formal setting.
+
+Several of the scene's elements are open to objection on their own terms.
+\begin{itemize}
+  \item \emph{Violence.} Among primates, conflict is frequent but usually limited, and it
+    is often followed by reconciliation \cite{deWaal1989}. Evolutionary game theory
+    explains why contests between members of the same species usually take the form of
+    limited, not escalated, fighting \cite{MaynardSmithPrice1973}. Disputes that end in
+    exhaustion, hierarchy or reconciliation do not by themselves produce signs. The
+    account's answer is that mimetic intensity has disabled these ordinary resolutions,
+    which is itself one of the elements whose necessity is in question.
+  \item \emph{Deferral as a strategy.} In the Hawk--Dove game, mutual restraint is not
+    stable: against a participant who refrains, taking the resource does better.%
+    \unverified{The Hawk--Dove game postdates Maynard Smith and Price (1973). Cite the
+    right source, probably Maynard Smith, \emph{Evolution and the Theory of Games}
+    (1982).}
+    A deferral that rests on self-interest therefore needs further explanation. The
+    account supplies it through the intensity of mimetic desire and the threat of
+    collective violence, again through the narrative content.
+  \item \emph{Division.} By the time the sparagmos begins, the aborted gesture has
+    already designated the object. Its role in the origin of distribution and of the
+    sacred is not in question here. Its role in the emergence of reference is unclear.
+\end{itemize}
+
+The issue is therefore not whether these elements are plausible. It is whether they are
+\emph{load-bearing}. If the derivation of the sign and its forms depends on them, it
+inherits their contingency, and the charge of a just-so story applies. If it does not,
+the derivation should be statable without them.
+
+The present work follows in the spirit of Gans's opening sentence, and applies it to the
+originary scene itself. Mimetic rivalry, catastrophic violence and the sparagmos are
+explanatory commitments, and each is a candidate for a mystery multiplied beyond
+necessity. The question is whether the derivation of the sign and its forms requires
+them. If it does not, the principle with which Gans begins recommends setting them aside.
+
+\subsection{The target: a grounded symbolic graph}
+
+A generative account needs a destination as well as a starting point. Both can be stated
+using accepted notions of the sign.
+
+\paragraph{The starting state.}
+There are actors and physical objects. There are contexts: at each time, which actors are
+present and which objects are within whose reach. Actors move, and some movements are
+directed at objects. All the relations in this state are momentary and local. Each holds
+between particular actors and things, at a particular time, in a particular context.
+There are no symbolic nodes.
+
+\paragraph{The sign as a relation.}
+The accepted definitions of the sign are relational. For Saussure, the linguistic sign
+joins a concept and an acoustic image, and its value is fixed only by its differences
+from other signs in the system.%
+\unverified{Add a citation, with page, to the \emph{Course in General Linguistics}.}
+For Peirce, ``a sign, or representamen, is something which stands to somebody for
+something in some respect or capacity'' \cite[2.228]{PeirceCP}. This is a relation among
+a sign, an object and an interpretant, and it holds \emph{for} someone. Morris divides
+the study of signs by the relations a sign can enter into: to other signs, to objects,
+and to its interpreters \cite{Morris1938}.
+
+On each account, a sign is not a thing with a property but a term in relations. Among
+those relations are relations to the \emph{actors} who produce and interpret it. The
+minimal mathematical structure of relations is a graph. Relations among more than two
+terms can be represented as a hypergraph, or encoded in an ordinary graph by an incidence
+construction, in which each instance of a relation becomes a node joined to its
+arguments. The relevant graphs are many-sorted: their vertices include actors, physical
+objects, and the acts by which actors relate to objects and to one another.
+
+\paragraph{Actors, time and context.}
+Every such relation is indexed by actors, by a time and by a context. The most
+elementary sign relation, ostension, shows all three at once. \emph{This}, \emph{here} and
+\emph{now} designate only within the situation in which they are produced, for those who
+share it. A pointing gesture relates one actor, by way of a movement, to an object, at one
+moment and in one place, and only for another actor who takes it up. The relation does
+not outlast the act.
+
+Symbolic reference is what escapes this indexing. Hockett lists \emph{displacement}, the
+capacity to refer to what is removed in time or place from the moment of speaking, among
+the design features of human language \cite{Hockett1960}. Deacon, building on Peirce,
+argues that symbolic reference is grounded in indexical reference but depends on
+relations among symbols themselves \cite{Deacon1997}. In graph terms, a symbolic node is
+something that persists across contexts and across occasions of use: different actors
+can re-identify it, at other times and in other places, and it can enter into further
+relations there.
+
+\paragraph{The end state.}
+A generative account must arrive at a graph with the following properties.
+\begin{enumerate}
+  \item \emph{Nodes that stand for things.} Some vertices are symbolic, and stand for
+    objects to actors.
+  \item \emph{Persistence beyond the context of origin.} A symbolic node can be
+    re-identified at another time, in another place and by another actor, including in
+    the absence of what it stands for.
+  \item \emph{Relations among symbolic nodes.} Symbolic nodes stand in relations to one
+    another, not only to objects, and some of these relations have \emph{roles}, where it
+    matters which term is which.
+  \item \emph{Grounding.} Every symbolic node can be traced back to the physical world,
+    so there are no free-floating symbols.
+  \item \emph{Truth and falsity.} What is said with symbolic nodes has conditions under
+    which it holds, and it can fail.%
+    \unverified{Hockett and Altmann's ``prevarication'' may be the right citation here.
+    Check.}
+  \item \emph{Partiality.} Relations can be affirmed, denied, or left unsaid, without
+    silence having to carry information.
+  \item \emph{Open-endedness.} Any finite relational structure over grounded objects can
+    be expressed.
+\end{enumerate}
+
+\paragraph{The generative task.}
+The task is to get from the starting state to the end state using only what the starting
+state contains, and operations on it applied to their own products. Nothing symbolic may
+be assumed along the way. Several features commonly attributed to human language lie
+outside the target: the vocal-auditory channel, duality of patterning, and cultural
+transmission across generations. The account addresses the emergence of reference and of
+relational structure, not of speech.
+
+The target also makes precise a hypothesis that motivated the work:
+\begin{itemize}[nosep]
+  \item the ostensive establishes an edge between actors and an object within a single
+    context;
+  \item the imperative is such an edge whose object is missing from the actors' current
+    context;
+  \item the declarative yields a node: a relation that has itself become something the
+    actors can refer to, and that persists across contexts.
+\end{itemize}
+The formalization supports a sharper version of the last point. The first symbolic node
+is a \emph{reified relation}, and relations between nodes arise by the same operation
+applied one level up.
+
+\subsection{Aim: a minimal axiom set that does not license itself}
+
+The aim is to find a minimal set of axioms under which the end state of
+Section~1.3 can be reached from the starting state, and to prove that it can.
+
+\paragraph{The rule against self-licensing.}
+An axiom set \emph{licenses itself} when what it is supposed to generate is built into its
+assumptions, so that the derivation only returns what was put in. To exclude this, every
+axiom set considered here must satisfy two conditions.
+\begin{enumerate}
+  \item \emph{Base vocabulary only.} Axioms may speak only of what the starting state
+    contains: actors, physical objects, times, movements, reach, contact, perception, and
+    resemblance between movements. They may not mention signs, meaning, reference,
+    uptake, the ostensive, the imperative, the declarative, symbolic nodes, claims or
+    truth, nor any notion defined from these.
+  \item \emph{Target notions by definition only.} Every notion that belongs to the end
+    state is introduced by an explicit definition in the base vocabulary. A definition
+    adds no constraint on what can happen: it names a pattern, which may or may not
+    occur.
+\end{enumerate}
+Under these conditions, every property of the end state that the account establishes is a
+theorem, derived from axioms that do not mention it.
+
+\paragraph{Definitions are hypotheses.}
+The rule shifts the weight of the account onto its definitions: what it is for a movement
+to be taken up as being about something, or for a pattern of responses to constitute a
+shared centre. A definition can smuggle in as much as an axiom can. Two safeguards apply.
+Definitions are drawn as closely as possible from accepted notions of the sign, and they
+are stated as explicit hypotheses about what the defined notion consists in, open to
+dispute and to replacement by alternatives.
+
+\paragraph{Generativity relative to the target.}
+With the target fixed and the rule in force, the aim has three parts.
+\begin{description}[leftmargin=1.5em, style=nextline]
+  \item[Existence.] There is a model of the axioms in which the end state, or the relevant
+    part of it, arises from a starting state that lacks it.
+  \item[Necessity.] In every model of the axioms, whenever part of the end state exists,
+    it has a determinate origin and order.
+  \item[Universality.] The operations that produce the first symbolic structures suffice
+    for open-endedness: any finite relational structure over grounded objects can be
+    reached.
+\end{description}
+
+\paragraph{Minimality.}
+An axiom set is minimal when each axiom is needed: for each axiom there is a model of the
+others in which some property of the end state fails. Minimality is shown axiom by axiom,
+by exhibiting such countermodels.
+
+The aim is not to show that the end state was inevitable, nor that it was reached in one
+particular way. It is to show that it can be reached under assumptions that are weak,
+explicit and free of the target, and to identify which assumptions each part of it
+requires.
+
+\paragraph{Comparing accounts.}
+The same rule suggests a way of comparing accounts. Formalize an account, separate its
+primitives into base vocabulary and anything semiotic, and ask whether its target notions
+can be defined from the base part alone. Padoa's method from logic gives a standard test:
+a notion is not definable from the other primitives if two models agree on all of them
+but disagree on that notion. One feature that may signal self-licensing is a primitive
+kind of act whose only role is to be responded to, such as the costless signals of a
+signaling game. Any such result holds only relative to a particular formalization, and
+only relative to the present target, the emergence of sign-hood. It is not a criticism
+of what other accounts set out to explain. Applying the test to other accounts,
+including Gans's own scene, is left as work in progress.
+
+\subsection{Rival orderings}
+
+A further motivation is comparative. The sequence ostensive, imperative, declarative is
+one reading among several, and other readings, for instance ones in which the
+declarative is primary, are possible.%
+\unverified{Name proponents of declarative-first or other orderings, or rephrase as the
+author's conjecture.}
+Under the rule of Section~1.4, the choice between them becomes precise. An account that
+builds a particular mode into its axioms licenses its own ordering. The real question is
+which orderings can be generated from axioms in the base vocabulary, and under which
+assumptions. The framework developed here bears on this directly. In it, the declarative
+requires the \emph{absence} of its object, but not a prior failed imperative. The
+imperative and the declarative appear as two responses to absence, not as successive
+stages.
+
+\subsection{Why machine verification}
+
+Arguments in humanistic theory often rely on steps that are intuitively compelling but
+unstated. Formalization in a proof assistant forces every assumption to be written down
+and every inference to be checked. All results reported here are formalized in the
+Lean~4 proof assistant \cite{deMoura2021} and checked in full, with no unproven steps.
+
+The process was itself informative. Several assumptions that the informal narrative
+leaves implicit were exposed only when a proof failed without them. Among them:
+\begin{itemize}[nosep]
+  \item a kinematic principle linking a reproduced gesture to the object it was
+    originally directed at;
+  \item the requirement that one participant act before another, which corresponds to
+    Katz's firstness;
+  \item the dependence of falsehood on the drift of signs away from their iconic
+    origins;
+  \item the reliance of affirmation, derived as the negation of a negation, on classical
+    logic.
+\end{itemize}
+Formalization also makes it possible to say exactly which statements are derived and
+which are merely definitions. The paper marks this distinction throughout.
+
+\subsection{Outline}
+
+The remaining sections are less polished than this one. Section~2 summarizes the formal
+system: its primitives, axioms and definitions. Section~3 lists the results, with the names
+of the corresponding theorems in the Lean development. Section~4 records how the account
+developed, including the main decisions and the assumptions that were abandoned along the
+way. Section~5 collects findings of particular interest, especially concerning firstness
+and Gans's account. Section~6 lists open problems. The Lean development is in the
+\texttt{lean/} directory of the repository. Table~\ref{tab:roadmap} shows where each
+property of the end state is reached.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}p{0.36\linewidth}p{0.6\linewidth}@{}}
+\toprule
+Property of the end state & Where it is reached \\
+\midrule
+1. Nodes that stand for things & declarative and lineage (Sections 3.1--3.2) \\
+2. Persistence & re-presentation; displaced claims (Sections 3.2, 3.4) \\
+3. Relations, with roles & claims and ordered claims (Sections 3.4--3.5) \\
+4. Grounding & content traces to an object once within reach (Section 3.1) \\
+5. Truth and falsity & falsehood requires drift (Section 3.3) \\
+6. Partiality & polarity; partial universality (Section 3.6) \\
+7. Open-endedness & universality (Section 3.4) \\
+\bottomrule
+\end{tabular}
+\caption{Where each property of the end state is reached.}
+\label{tab:roadmap}
+\end{table}
+
+
+%======================================================================
+\section{The Formal System}
+
+This section summarizes the current system, formalized in
+\path{lean/GaEmergence/Completion.lean} and the files built on it.
+
+\paragraph{Worlds.}
+A world is a single discrete-time history over a type $P$ of actors, a type $O$ of
+physical objects and a type $M$ of movement forms. Its primitives are:
+\begin{itemize}[nosep]
+  \item $\mathsf{mv}(t,p)$: the form of $p$'s movement at time $t$, if $p$ moves;
+  \item $\mathsf{heads}(t,p,o)$: $p$'s movement at $t$, if continued, would end in contact
+    with $o$;
+  \item $\mathsf{contact}(t,p,o)$ and $\mathsf{within}(t,p,o)$: physical contact, and reach;
+  \item $\mathsf{perceives}(t,q,p)$: $q$ perceives $p$'s movement at $t$;
+  \item $\mathsf{opens}(m',m)$ and $\mathsf{matches}(m',m)$: form $m'$ begins like $m$, and
+    $m'$ fully reproduces $m$;
+  \item a response window $w$, and an unspecified retention predicate.
+\end{itemize}
+Presence is reach: an object is present to an actor when it is within that actor's
+reach.
+
+\paragraph{Axioms.}
+All axioms are stated in the base vocabulary.
+\begin{enumerate}[label=A\arabic*., nosep]
+  \item A movement can head only toward what is within reach.
+  \item Only a movement can head toward anything.
+  \item Contact completes a heading.
+  \item Perception is first-order: an actor perceives another actor's actual movement.
+  \item $\mathsf{matches}$ is reflexive and symmetric, but not assumed transitive; a full
+    match also begins like its model.
+  \item Retention, left unspecified: a retained movement recurs in a matching form.
+  \item Kinematics: a movement that begins like a reach for $o$, made where $o$ is within
+    reach, is itself a reach for $o$.
+\end{enumerate}
+Variation is implicit: no axiom requires or forbids any particular movement.
+
+\paragraph{Definitions.}
+All target notions are definitions.
+\begin{itemize}
+  \item \emph{Directedness} is a pending completion. A movement is directed at an object
+    if it heads for it, and at an earlier movement if it begins like it. \emph{Completion}
+    is contact at the next step, or a full match. A movement is \emph{suspended} toward a
+    target if it is directed at it and does not complete.
+  \item \emph{Response}: $q$'s movement at $t'$ responds to $p$'s movement at $t$ if $q$
+    perceived it and $t < t' \le t + w$.
+  \item \emph{Taking-as} (the response principle): $q$ takes $p$'s movement as being about
+    $\tau$ if $q$ responds with a movement directed at $\tau$.
+  \item \emph{Centre}, with firstness: $p$ is suspended toward a target, $q$ perceives
+    this and is suspended toward the same target strictly later within the window, and
+    $p$ perceives that.
+  \item \emph{Dependent response}: regularity (another such episode, with the same kind of
+    movement by $p$) and contrast (an occasion where $q$ could have responded, $p$ made no
+    such movement, and $q$ did not respond).
+  \item \emph{Ostensive}: a centre on an object, with a dependent response.
+    \emph{Declarative}: a centre on a movement, with a dependent response.
+    \emph{Imperative}: a movement taken as being about an object out of the mover's reach.
+  \item \emph{Lineage}: a movement stands for an object if it is the first movement of an
+    ostensive on it, or fully matches an earlier movement that stands for it.
+  \item \emph{Graph notions}. A \emph{symbolic node} is a movement that is the target of a
+    declarative. An \emph{arc} runs from a node to the object it stands for.
+  \item \emph{Claims and their truth}. A \emph{claim} is a centre on two targets at once,
+    each with a dependent response. An \emph{ordered claim} is a centre on one target,
+    followed by a centre on another. \emph{Together}: someone has both objects within
+    reach at the same time.
+  \item \emph{Saying and assertion}. Saying is recursive: a claim says ``not together'',
+    and a centre on a movement that says $\varphi$ says ``not $\varphi$''. A saying is
+    \emph{asserted} if no later centre targets a movement of the same kind.
+\end{itemize}
+
+%======================================================================
+\section{Results}
+
+All results below are checked in Lean, with no unproven steps. The labels mark each
+result as \emph{definitional} (a direct consequence of the definitions), \emph{derived}
+(it uses the axioms), or a \emph{model} (an existence result or countermodel, shown by
+constructing a world). Theorem names are given in typewriter type.
+
+\DeclareUrlCommand\lean{\urlstyle{tt}}
+
+\subsection{Meaning and origin}
+\begin{itemize}
+  \item A centre is exactly a taking-as whose response is suspended, so the centre is not a
+    separate notion: \lean{joint_iff_suspended_taking}, \lean{center_takes}.
+    \emph{Definitional.}
+  \item A simultaneous joint stop is not a centre, because nobody responds:
+    \lean{simultaneous_not_center}. A one-off coincidence is not dependent:
+    \lean{coincidence_not_dependent}. Nor is a response from someone who holds back
+    whenever possible: \lean{indiscriminate_not_dependent}. \emph{Definitional.}
+  \item Completion ends aboutness: \lean{completion_ends_aboutness}. \emph{Definitional;
+    formerly an axiom.}
+  \item Whatever a sign stands for was once within someone's reach:
+    \lean{content_was_present}. \emph{Derived, by induction.}
+  \item Without recurrence there are no symbolic nodes: \lean{no_recurrence_no_symbol}.
+    \emph{Derived.}
+\end{itemize}
+
+\subsection{Imperative and declarative}
+\begin{itemize}
+  \item A movement made where its object is out of reach is not directed at it:
+    \lean{aimless_in_absence}. \emph{Derived.}
+  \item Taking a movement as being about an object requires a response where the object
+    is, so fetching is derived, not assumed: \lean{takes_object_within}. When nothing is in
+    reach, only movements can be targets: \lean{unreachable_only_acts}. \emph{Derived.}
+  \item \emph{Salience.} Pure attention to a gesture descended from a reach requires the
+    object's absence: \lean{salience}. \emph{Derived, using kinematics.}
+  \item An absent object can be addressed only through a sign:
+    \lean{absent_only_through_sign}. \emph{Derived.}
+  \item \emph{Direction of fit.} The imperative is unsatisfied when made, and satisfying it
+    requires the world to change: \lean{imperative_needs_change}. A pure declarative's
+    ``don't be present'' is satisfied when made: \lean{declarative_satisfied_when_made}.
+    \emph{Derived.}
+  \item \emph{The interdiction redirected.} In the ostensive the object is within reach and
+    the participants refrain. In the declarative the object is out of reach:
+    \lean{interdiction_redirected}. \emph{Derived.}
+\end{itemize}
+
+\subsection{Truth and falsehood}
+\begin{itemize}
+  \item With kinematics, and if onset-matching survives full matching (coherence), no
+    declarative is false: \lean{no_falsehood_without_drift}. \emph{Derived.}
+  \item In a false declarative, the movement made in the object's presence does not begin
+    like any earlier reach for it: \lean{false_requires_arbitrary}. \emph{Derived.}
+  \item A drifting lineage yields a false declarative in a world satisfying every axiom:
+    \lean{falsehood_from_drift}. \emph{Model.}
+\end{itemize}
+
+\subsection{Graphs}
+\begin{itemize}
+  \item A claim on two movements is exactly two declaratives made by the same movements:
+    \lean{claim_iff_two_declaratives}. \emph{Definitional.}
+  \item Claims are grounded: \lean{claim_grounded}. \emph{Derived.}
+  \item \emph{Universality.} For any $n$ objects, any loop-free graph $G$ on them and any
+    arrangement $H$ of which pairs are together, there is a history satisfying every axiom
+    in which every object has a grounded sign, every edge of $G$ is a claim with arcs to
+    exactly its endpoints' signs, each claim is true iff its objects are not together in
+    $H$, and there are no other claims: \lean{universality}. Claims are made where neither
+    speaker has any object in reach (\lean{Univ.displaced}). \emph{Model, for every $G$ and
+    $H$.}
+\end{itemize}
+
+\subsection{Roles}
+\begin{itemize}
+  \item An unordered claim is the same event read either way round: \lean{claim_symm}.
+    Hence every faithful reading of unordered claims expresses a symmetric relation:
+    \lean{unordered_only_symmetric}. \emph{Definitional and derived.}
+  \item Succession, defined from reach and time, is asymmetric. In a concrete world it has
+    no faithful unordered reading: \lean{succession_not_unordered}. \emph{Model.}
+  \item Ordered claims that determine what they are about give every relation a faithful
+    reading: \lean{ordered_faithful}. In a model, ``A then B'' is true and ``B then A'' is
+    false: \lean{succession_ordered}, \lean{Ord.order_matters}. \emph{Derived and model.}
+\end{itemize}
+
+\subsection{Polarity}
+\begin{itemize}
+  \item Everything said is a negation: \lean{says_neg}. A centre on a claim says ``not (not
+    together)'', which holds exactly when the objects are together: \lean{affirm}. This
+    step uses classical logic. A formula and its negation are never both true:
+    \lean{no_contradiction}. \emph{Definitional and derived.}
+  \item \emph{Partial universality.} For any pairs to deny, pairs to affirm and any
+    arrangement, there is a history in which exactly those pairs are asserted, each true iff
+    the arrangement agrees, and all other pairs are unsaid: \lean{partial_universality}.
+    \emph{Model, for every choice.}
+\end{itemize}
+
+\subsection{Models and countermodels}
+\begin{itemize}
+  \item \lean{emergence}: an ostensive (two episodes and a contrast), a satisfied
+    imperative, and a pure declarative standing for an absent object, with non-transitive
+    matching.
+  \item \lean{gaze_not_center}: joint looking, with the object in reach and mutual
+    perception, is not an ostensive.
+  \item \lean{kinematics_needed}, \lean{fit_needs_kinematics}: without kinematics, a
+    ``declarative'' can occur with the object present, and its ``don't be present'' fails.
+\end{itemize}
+
+%======================================================================
+\section{How the Account Developed}
+
+The account went through several versions. Each version is preserved in the Lean
+development. The main decisions and changes, in order:
+
+\begin{enumerate}
+  \item \emph{The starting axioms.} The work began with four informal axioms: plurality,
+    contextual recognition, contextual recurrence, and a forced preservation of failed
+    relations. Examining them showed the following.
+    \begin{itemize}[nosep]
+      \item Plurality is derivable once recognition is required to be by someone else.
+      \item Recognition needs a target, and a ground; otherwise meaning could arise from
+        nothing.
+      \item Recurrence must not be an equivalence relation, or sign-types are smuggled in,
+        and it must carry its target over.
+      \item Forced preservation splits into a compulsion to attempt and the untenability of
+        indefinite failure. If forcing never lapses, these together entail resolution, so
+        ``success is not guaranteed'' requires that forcing can lapse.
+      \item A reflexive uptake, attention to a sign as such, was needed. Without it there
+        are no symbolic nodes, and forcing on an unavailable object becomes inconsistent.
+    \end{itemize}
+    (\texttt{Basic.lean}, \texttt{Theorems.lean}, \texttt{Models.lean}.)
+  \item \emph{The ostensive was being assumed.} Presence was a primitive ground for
+    recognition. It was replaced by a practical layer of reaching, grasping, mimetic
+    symmetry and restraint. The ostensive became a joint deferral, entailed by convergence,
+    symmetry and restraint. Countermodels with hierarchy and with rivalry showed that each
+    ingredient was needed. (\texttt{Originary.lean}.)
+  \item \emph{Uptake was a primitive record.} It was replaced by a definition: taking-as as
+    a kind of response. (\texttt{Behaviour.lean}.)
+  \item \emph{Catastrophe was questioned.} Violence is common and is often resolved by
+    fatigue. Restraint was replaced by exhaustion: clashes cannot recur indefinitely. The
+    ostensive then follows when desire outlasts the capacity to fight. Countermodels covered
+    endless fighting, walking away, and hierarchy. (\texttt{Behaviour.lean}.)
+  \item \emph{Refraining as a losing strategy.} On ordinary assumptions about preference,
+    mutual restraint is unstable. A division of the object afterwards (the sparagmos) was
+    considered as the payoff and rejected as an unnecessary narrative commitment. Chance,
+    meaning that any movement may occur, was adopted instead: a joint holding-back can
+    simply happen.
+  \item \emph{What makes a sign worth repeating?} Retention was introduced as an
+    unspecified function, mirroring the unspecified forcing. Without repetition, only
+    ostensives can exist. (\texttt{Retention.lean}.)
+  \item \emph{Why reaching and holding back?} Appropriation and rivalry were replaced by
+    completion and the principle that completion ends aboutness. Gaze was excluded by
+    defining directedness as a pending contact. (\texttt{Center.lean}.)
+  \item \emph{A self-licensing axiom was removed.} An axiom compelling a fetch when a sign
+    recurred in its object's absence built the imperative into the axioms. It was replaced
+    by the response principle, from which fetching follows. Forcing was then dropped
+    altogether: the permission to continue a failed relation needs no axiom, because
+    variation already provides it.
+  \item \emph{The completion system.} Directedness became a pending completion, either
+    contact or match. Kinematics was found to be necessary when the proof of salience
+    failed without it. (\texttt{Completion.lean}.)
+  \item \emph{The imperative is not a prerequisite.} The declarative requires the absence of
+    its object, not a failed imperative. Gans's ``don't'', addressed to the object, led to
+    the direction-of-fit results. (\texttt{Fit.lean}.)
+  \item \emph{Falsehood was at first impossible.} Every pure declarative came out true.
+    Drift, and the arbitrariness it produces, turned out to be the precondition of
+    falsehood. (\texttt{Falsehood.lean}.)
+  \item \emph{From nodes to graphs.} A claim became a node with outgoing ``about'' arcs, not
+    an arc between nodes. This keeps a single kind of arc, accommodates symmetric relations
+    and relations with more than two terms, and leads to universality.
+    (\texttt{Graphs.lean}.)
+  \item \emph{Firstness.} Once it was noticed that a simultaneous centre contains no
+    uptake, a centre was required to have one participant first and another responding,
+    following Katz. Lineage became rooted in the first movement.
+  \item \emph{Dependent response.} ``In response to'' was strengthened from ``perceived,
+    then a movement within the window'' to regularity with contrast. A counterfactual
+    criterion was rejected because it would need dispositions as primitives. A
+    single-episode mark was rejected because coincidences leave the same marks.
+  \item \emph{Roles and polarity.} Ordered claims and succession gave relations with roles
+    (\texttt{Roles.lean}). The closed-world problem of negative-only claims led to the
+    positive as a negation of a negation, and to partial universality
+    (\texttt{Polarity.lean}).
+  \item \emph{The paper.} The rule against self-licensing, the target end state, and the
+    convention for marking unverified passages were made explicit while writing Section~1.
+\end{enumerate}
+
+%======================================================================
+\section{Findings}
+
+\subsection{Firstness}
+\begin{enumerate}
+  \item \emph{Firstness is required by the notion of response.} A simultaneous joint
+    holding-back contains no uptake, because neither actor responds to the other. For a
+    centre to contain any taking-as, one actor must act first and the other respond.
+    Katz's firstness does not need to be posited. It follows from what a response is.
+  \item \emph{Firstness reappears as order inside claims.} Unordered claims can express
+    only symmetric relations. Temporal order inside a claim, which is firstness at the
+    level of the claim, is what makes relations with roles expressible.
+  \item \emph{The first actor fixes the form.} The first actor's movement is the sign and
+    the second's is the uptake, so lineage descends from the first. This gives a minimal,
+    non-political reading of the importance Katz assigns to firstness. The stronger reading,
+    on which the first holds authority, is not needed by the derivation.
+  \item \emph{Firstness locates the risk.} Holding back first is exposed, since the other
+    may simply take. Only the response turns the first holding-back into a sign.
+\end{enumerate}
+
+\subsection{Gans's account}
+\begin{enumerate}
+  \item \emph{The aborted gesture survives as the core.} When shared reference to a centre
+    is required to be peaceful and the same for both actors, joint holding-back is what
+    remains, and the ostensive no longer needs to be assumed.
+  \item \emph{Holding back is needed for a different reason.} It is needed not because of
+    violence, but because completion ends aboutness: a completed reach is getting, not
+    pointing. Desire and rivalry become one possible motive for holding back, not a
+    condition of it.
+  \item \emph{The narrative content is not load-bearing for these results.} Mimetic crisis,
+    catastrophic violence, mimetic symmetry and the sparagmos are not used by the
+    possibility, necessity or universality results. Chance and retention take their place.
+    In the spirit of Gans's opening sentence, they are mysteries that need not be
+    multiplied.
+  \item \emph{Gaze is not enough.} Joint looking at a reachable object, with mutual
+    perception, is not an ostensive. There is no completion to withhold. This supports
+    Gans's choice of a gesture of appropriation over attention alone.
+  \item \emph{The imperative is a sibling of the declarative, not its precursor.} The
+    declarative requires the object's absence, not a failed imperative. Gans's own
+    description, in which the ``don't'' is addressed to the object, fits this reading
+    well.
+  \item \emph{The declarative is an imperative already obeyed.} This is now a theorem about
+    direction of fit. The imperative is unsatisfied when made and fits the world only after
+    it changes. The declarative's ``don't be present'' is satisfied when made.
+  \item \emph{The interdiction is redirected.} In the ostensive, the actors refrain from the
+    present object. In the declarative, the object ``refrains'' from being present.
+  \item \emph{The declarative needs a kinematic principle.} Reproducing a reach where the
+    object is reachable reaches it. Without this principle, attention to a gesture as such
+    could occur with the object present, and the tie between the declarative and absence is
+    lost.
+  \item \emph{The first signs are always true.} Falsehood requires drift away from the shape
+    of the reach the sign descends from. Arbitrariness is acquired, not original, and it is
+    the precondition of falsehood.
+  \item \emph{Necessity becomes ``the only possible form''.} Gans presents the declarative
+    as what must happen when the imperative fails. Here, nothing compels anyone to continue.
+    But if a failed relation is continued, the response can only take the form of the
+    imperative (if the object can be reached) or of the declarative (if it cannot).
+  \item \emph{A sign needs repetition.} A one-off coincidence is not a sign. The first
+    holding-back becomes a sign retroactively, when it is repeated and answered.
+  \item \emph{The node is a reified relation.} The first symbolic node is a relation made
+    into something one can refer to. A claim is the same operation one level up, and it is
+    nothing more than two declaratives made by the same movements.
+  \item \emph{Negation comes first, and affirmation costs classical logic.} The priority of
+    the ``don't'' is formally coherent. Everything said is a negation, and the positive is
+    a negation of a negation. Recovering the positive from it uses excluded middle.
+  \item \emph{Many natural axioms secretly mention uptake.} Several candidate axioms,
+    including forced preservation and reflexive uptake, turned out to presuppose the sign.
+    This motivated the rule against self-licensing.
+\end{enumerate}
+
+%======================================================================
+\section{Open Problems}
+
+\begin{itemize}
+  \item \emph{Minimality.} Countermodels are still needed for the physical axioms, for
+    perception and for the resemblance axioms.
+  \item \emph{Likelihood.} The results are about possibility. A probabilistic or dynamic
+    version, with retention and variation given quantitative form, is open.
+  \item \emph{Response.} Regularity with contrast is a minimal criterion: two episodes and
+    one contrast, and common causes are not excluded.
+  \item \emph{Two kinds of completion.} Contact and match are only partly unified, and
+    ``incomplete match'' needs a more precise account.
+  \item \emph{Scope.} The account covers two actors at a time, coarse time, and
+    co-presence realized by passive ``witnesses''. Roles exist only for succession, and
+    polarity only for togetherness. Properties, quantification and deeper recursion of
+    claims are open.
+  \item \emph{Comparing accounts.} Apply the self-licensing test to other accounts,
+    including Gans's own scene and Lewis--Skyrms signaling games. It is conjectured that the
+    present account generates the frame that signaling games presuppose.
+  \item \emph{Verification.} The open items in \texttt{VERIFYING.md} need checking, along
+    with the interpretations of Gans and Katz against their texts.
+  \item \emph{Housekeeping.} The earlier layers of the Lean development use different
+    definitions, and could be archived or unified with the current system.
+\end{itemize}
+
+
+\begin{thebibliography}{99}
+
+\bibitem{AlexanderSkyrmsZabell2012}
+J.~M. Alexander, B.~Skyrms and S.~L. Zabell.
+\newblock Inventing new signals.
+\newblock \emph{Dynamic Games and Applications}, 2012.
+\newblock doi:10.1007/s13235-011-0027-2.
+
+\bibitem{Arbib2012}
+M.~A. Arbib.
+\newblock \emph{How the Brain Got Language: The Mirror System Hypothesis}.
+\newblock Oxford University Press, New York, 2012.
+
+\bibitem{BerwickChomsky2016}
+R.~C. Berwick and N.~Chomsky.
+\newblock \emph{Why Only Us: Language and Evolution}.
+\newblock MIT Press, Cambridge, MA, 2016.
+
+\bibitem{Corballis2002}
+M.~C. Corballis.
+\newblock \emph{From Hand to Mouth: The Origins of Language}.
+\newblock Princeton University Press, Princeton, 2002.
+
+\bibitem{deMoura2021}
+L.~de Moura and S.~Ullrich.
+\newblock The Lean 4 theorem prover and programming language.
+\newblock In \emph{Automated Deduction -- CADE 28}, Lecture Notes in Computer
+  Science 12699, pages 625--635. Springer, 2021.
+
+\bibitem{deWaal1989}
+F.~de Waal.
+\newblock \emph{Peacemaking among Primates}.
+\newblock Harvard University Press, Cambridge, MA, 1989.
+
+\bibitem{Deacon1997}
+T.~W. Deacon.
+\newblock \emph{The Symbolic Species: The Co-evolution of Language and the Brain}.
+\newblock W.~W. Norton, New York, 1997.
+
+\bibitem{Dunbar1996}
+R.~Dunbar.
+\newblock \emph{Grooming, Gossip, and the Evolution of Language}.
+\newblock Harvard University Press, Cambridge, MA, 1996.
+
+\bibitem{Gans1981}
+E.~Gans.
+\newblock \emph{The Origin of Language: A Formal Theory of Representation}.
+\newblock University of California Press, Berkeley, 1981.
+\newblock New edition: \emph{The Origin of Language: A New Edition}, with an
+  introduction by A.~Katz, Spuyten Duyvil, New York, 2019.
+
+\bibitem{Gans1993}
+E.~Gans.
+\newblock \emph{Originary Thinking: Elements of Generative Anthropology}.
+\newblock Stanford University Press, Stanford, 1993.
+
+\bibitem{Gans2007}
+E.~Gans.
+\newblock On firstness.
+\newblock In A.~Katz, editor, \emph{The Originary Hypothesis: A Minimal Proposal for
+  Humanistic Inquiry}, pages 45--57. The Davies Group, Aurora, CO, 2007.
+
+\bibitem{Girard1977}
+R.~Girard.
+\newblock \emph{Violence and the Sacred}.
+\newblock Translated by P.~Gregory. Johns Hopkins University Press, Baltimore, 1977.
+
+\bibitem{Grice1957}
+H.~P. Grice.
+\newblock Meaning.
+\newblock \emph{The Philosophical Review}, 66(3):377--388, 1957.
+
+\bibitem{Hauser2014}
+M.~D. Hauser, C.~Yang, R.~C. Berwick, I.~Tattersall, M.~J. Ryan, J.~Watumull,
+  N.~Chomsky and R.~C. Lewontin.
+\newblock The mystery of language evolution.
+\newblock \emph{Frontiers in Psychology}, 5:401, 2014.
+
+\bibitem{Hockett1960}
+C.~F. Hockett.
+\newblock The origin of speech.
+\newblock \emph{Scientific American}, September 1960.
+
+\bibitem{Katz2005}
+A.~Katz.
+\newblock Remembering Amalek: 9/11 and generative thinking.
+\newblock \emph{Anthropoetics}, X(2), Fall 2004/Winter 2005.
+
+\bibitem{Lewis1969}
+D.~Lewis.
+\newblock \emph{Convention: A Philosophical Study}.
+\newblock Harvard University Press, Cambridge, MA, 1969.
+
+\bibitem{Lyons1991}
+J.~Lyons.
+\newblock The origin of language, speech and languages.
+\newblock In \emph{Natural Language and Universal Grammar: Essays in Linguistic
+  Theory}, volume~1. Cambridge University Press, Cambridge, 1991.
+
+\bibitem{MaynardSmithPrice1973}
+J.~Maynard Smith and G.~R. Price.
+\newblock The logic of animal conflict.
+\newblock \emph{Nature}, 246:15--18, 1973.
+
+\bibitem{Morris1938}
+C.~W. Morris.
+\newblock \emph{Foundations of the Theory of Signs}.
+\newblock International Encyclopedia of Unified Science. University of Chicago Press,
+  Chicago, 1938.
+
+\bibitem{PeirceCP}
+C.~S. Peirce.
+\newblock \emph{Collected Papers of Charles Sanders Peirce}.
+\newblock Harvard University Press, Cambridge, MA. Cited by volume and paragraph.
+
+\bibitem{Sackeroff2015}
+S.~Sackeroff.
+\newblock The ends of deferral.
+\newblock \emph{Anthropoetics}, XX(2), 2015.
+
+\bibitem{Skyrms2010}
+B.~Skyrms.
+\newblock \emph{Signals: Evolution, Learning, and Information}.
+\newblock Oxford University Press, Oxford, 2010.
+
+\bibitem{StuddertKennedyTerrace2017}
+M.~Studdert-Kennedy and H.~Terrace.
+\newblock In the beginning: a review of Robert C. Berwick and Noam Chomsky's
+  \emph{Why Only Us}.
+\newblock \emph{Journal of Language Evolution}, 2(2):114--125, 2017.
+
+\bibitem{Tomasello2008}
+M.~Tomasello.
+\newblock \emph{Origins of Human Communication}.
+\newblock MIT Press, Cambridge, MA, 2008.
+
+\end{thebibliography}
+
+\end{document}
