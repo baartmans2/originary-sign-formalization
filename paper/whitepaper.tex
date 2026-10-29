@@ -9,7 +9,9 @@
 \usepackage{booktabs}
 \usepackage{xcolor}
 \usepackage[textsize=scriptsize]{todonotes}
+\usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
+\setlength{\emergencystretch}{3em}
 
 % Passages drafted with AI assistance and not yet checked against their sources.
 % List them all with: grep -n unverified whitepaper.tex
@@ -441,16 +443,14 @@ which are merely definitions. The paper marks this distinction throughout.
 
 \subsection{Outline}
 
-Section~2 introduces the primitives and axioms, which concern only actors, movements,
-reach and resemblance. Section~3 defines taking-as, the centre, dependent response and the
-elementary modes as patterns of response. Section~4 reports the results that hold in every
-model: the origin of signs, the form of the imperative, the declarative's dependence on
-absence, direction of fit, and the conditions for falsehood. Section~5 reports the results
-on graphs: claims, universality, roles and polarity. Section~6 reports the models and
-countermodels that establish existence and show which assumptions are needed. Section~7
-discusses the relation to Generative Anthropology, open problems, and directions for
-collaborative work. Table~\ref{tab:roadmap} shows where each property of the end state is
-reached.
+The remaining sections are less polished than this one. Section~2 summarizes the formal
+system: its primitives, axioms and definitions. Section~3 lists the results, with the names
+of the corresponding theorems in the Lean development. Section~4 records how the account
+developed, including the main decisions and the assumptions that were abandoned along the
+way. Section~5 collects findings of particular interest, especially concerning firstness
+and Gans's account. Section~6 lists open problems. The Lean development is in the
+\texttt{lean/} directory of the repository. Table~\ref{tab:roadmap} shows where each
+property of the end state is reached.
 
 \begin{table}[h]
 \centering
@@ -459,18 +459,369 @@ reached.
 \toprule
 Property of the end state & Where it is reached \\
 \midrule
-1. Nodes that stand for things & declarative and lineage (Section 3) \\
-2. Persistence & re-presentation; displaced claims (Sections 4--5) \\
-3. Relations, with roles & claims and ordered claims (Section 5) \\
-4. Grounding & content traces to an object once within reach (Section 4) \\
-5. Truth and falsity & falsehood requires drift (Section 4) \\
-6. Partiality & polarity; partial universality (Section 5) \\
-7. Open-endedness & universality (Section 5) \\
+1. Nodes that stand for things & declarative and lineage (Sections 3.1--3.2) \\
+2. Persistence & re-presentation; displaced claims (Sections 3.2, 3.4) \\
+3. Relations, with roles & claims and ordered claims (Sections 3.4--3.5) \\
+4. Grounding & content traces to an object once within reach (Section 3.1) \\
+5. Truth and falsity & falsehood requires drift (Section 3.3) \\
+6. Partiality & polarity; partial universality (Section 3.6) \\
+7. Open-endedness & universality (Section 3.4) \\
 \bottomrule
 \end{tabular}
 \caption{Where each property of the end state is reached.}
 \label{tab:roadmap}
 \end{table}
+
+
+%======================================================================
+\section{The Formal System}
+
+This section summarizes the current system, formalized in
+\path{lean/GaEmergence/Completion.lean} and the files built on it.
+
+\paragraph{Worlds.}
+A world is a single discrete-time history over a type $P$ of actors, a type $O$ of
+physical objects and a type $M$ of movement forms. Its primitives are:
+\begin{itemize}[nosep]
+  \item $\mathsf{mv}(t,p)$: the form of $p$'s movement at time $t$, if $p$ moves;
+  \item $\mathsf{heads}(t,p,o)$: $p$'s movement at $t$, if continued, would end in contact
+    with $o$;
+  \item $\mathsf{contact}(t,p,o)$ and $\mathsf{within}(t,p,o)$: physical contact, and reach;
+  \item $\mathsf{perceives}(t,q,p)$: $q$ perceives $p$'s movement at $t$;
+  \item $\mathsf{opens}(m',m)$ and $\mathsf{matches}(m',m)$: form $m'$ begins like $m$, and
+    $m'$ fully reproduces $m$;
+  \item a response window $w$, and an unspecified retention predicate.
+\end{itemize}
+Presence is reach: an object is present to an actor when it is within that actor's
+reach.
+
+\paragraph{Axioms.}
+All axioms are stated in the base vocabulary.
+\begin{enumerate}[label=A\arabic*., nosep]
+  \item A movement can head only toward what is within reach.
+  \item Only a movement can head toward anything.
+  \item Contact completes a heading.
+  \item Perception is first-order: an actor perceives another actor's actual movement.
+  \item $\mathsf{matches}$ is reflexive and symmetric, but not assumed transitive; a full
+    match also begins like its model.
+  \item Retention, left unspecified: a retained movement recurs in a matching form.
+  \item Kinematics: a movement that begins like a reach for $o$, made where $o$ is within
+    reach, is itself a reach for $o$.
+\end{enumerate}
+Variation is implicit: no axiom requires or forbids any particular movement.
+
+\paragraph{Definitions.}
+All target notions are definitions.
+\begin{itemize}
+  \item \emph{Directedness} is a pending completion. A movement is directed at an object
+    if it heads for it, and at an earlier movement if it begins like it. \emph{Completion}
+    is contact at the next step, or a full match. A movement is \emph{suspended} toward a
+    target if it is directed at it and does not complete.
+  \item \emph{Response}: $q$'s movement at $t'$ responds to $p$'s movement at $t$ if $q$
+    perceived it and $t < t' \le t + w$.
+  \item \emph{Taking-as} (the response principle): $q$ takes $p$'s movement as being about
+    $\tau$ if $q$ responds with a movement directed at $\tau$.
+  \item \emph{Centre}, with firstness: $p$ is suspended toward a target, $q$ perceives
+    this and is suspended toward the same target strictly later within the window, and
+    $p$ perceives that.
+  \item \emph{Dependent response}: regularity (another such episode, with the same kind of
+    movement by $p$) and contrast (an occasion where $q$ could have responded, $p$ made no
+    such movement, and $q$ did not respond).
+  \item \emph{Ostensive}: a centre on an object, with a dependent response.
+    \emph{Declarative}: a centre on a movement, with a dependent response.
+    \emph{Imperative}: a movement taken as being about an object out of the mover's reach.
+  \item \emph{Lineage}: a movement stands for an object if it is the first movement of an
+    ostensive on it, or fully matches an earlier movement that stands for it.
+  \item \emph{Graph notions}. A \emph{symbolic node} is a movement that is the target of a
+    declarative. An \emph{arc} runs from a node to the object it stands for.
+  \item \emph{Claims and their truth}. A \emph{claim} is a centre on two targets at once,
+    each with a dependent response. An \emph{ordered claim} is a centre on one target,
+    followed by a centre on another. \emph{Together}: someone has both objects within
+    reach at the same time.
+  \item \emph{Saying and assertion}. Saying is recursive: a claim says ``not together'',
+    and a centre on a movement that says $\varphi$ says ``not $\varphi$''. A saying is
+    \emph{asserted} if no later centre targets a movement of the same kind.
+\end{itemize}
+
+%======================================================================
+\section{Results}
+
+All results below are checked in Lean, with no unproven steps. The labels mark each
+result as \emph{definitional} (a direct consequence of the definitions), \emph{derived}
+(it uses the axioms), or a \emph{model} (an existence result or countermodel, shown by
+constructing a world). Theorem names are given in typewriter type.
+
+\DeclareUrlCommand\lean{\urlstyle{tt}}
+
+\subsection{Meaning and origin}
+\begin{itemize}
+  \item A centre is exactly a taking-as whose response is suspended, so the centre is not a
+    separate notion: \lean{joint_iff_suspended_taking}, \lean{center_takes}.
+    \emph{Definitional.}
+  \item A simultaneous joint stop is not a centre, because nobody responds:
+    \lean{simultaneous_not_center}. A one-off coincidence is not dependent:
+    \lean{coincidence_not_dependent}. Nor is a response from someone who holds back
+    whenever possible: \lean{indiscriminate_not_dependent}. \emph{Definitional.}
+  \item Completion ends aboutness: \lean{completion_ends_aboutness}. \emph{Definitional;
+    formerly an axiom.}
+  \item Whatever a sign stands for was once within someone's reach:
+    \lean{content_was_present}. \emph{Derived, by induction.}
+  \item Without recurrence there are no symbolic nodes: \lean{no_recurrence_no_symbol}.
+    \emph{Derived.}
+\end{itemize}
+
+\subsection{Imperative and declarative}
+\begin{itemize}
+  \item A movement made where its object is out of reach is not directed at it:
+    \lean{aimless_in_absence}. \emph{Derived.}
+  \item Taking a movement as being about an object requires a response where the object
+    is, so fetching is derived, not assumed: \lean{takes_object_within}. When nothing is in
+    reach, only movements can be targets: \lean{unreachable_only_acts}. \emph{Derived.}
+  \item \emph{Salience.} Pure attention to a gesture descended from a reach requires the
+    object's absence: \lean{salience}. \emph{Derived, using kinematics.}
+  \item An absent object can be addressed only through a sign:
+    \lean{absent_only_through_sign}. \emph{Derived.}
+  \item \emph{Direction of fit.} The imperative is unsatisfied when made, and satisfying it
+    requires the world to change: \lean{imperative_needs_change}. A pure declarative's
+    ``don't be present'' is satisfied when made: \lean{declarative_satisfied_when_made}.
+    \emph{Derived.}
+  \item \emph{The interdiction redirected.} In the ostensive the object is within reach and
+    the participants refrain. In the declarative the object is out of reach:
+    \lean{interdiction_redirected}. \emph{Derived.}
+\end{itemize}
+
+\subsection{Truth and falsehood}
+\begin{itemize}
+  \item With kinematics, and if onset-matching survives full matching (coherence), no
+    declarative is false: \lean{no_falsehood_without_drift}. \emph{Derived.}
+  \item In a false declarative, the movement made in the object's presence does not begin
+    like any earlier reach for it: \lean{false_requires_arbitrary}. \emph{Derived.}
+  \item A drifting lineage yields a false declarative in a world satisfying every axiom:
+    \lean{falsehood_from_drift}. \emph{Model.}
+\end{itemize}
+
+\subsection{Graphs}
+\begin{itemize}
+  \item A claim on two movements is exactly two declaratives made by the same movements:
+    \lean{claim_iff_two_declaratives}. \emph{Definitional.}
+  \item Claims are grounded: \lean{claim_grounded}. \emph{Derived.}
+  \item \emph{Universality.} For any $n$ objects, any loop-free graph $G$ on them and any
+    arrangement $H$ of which pairs are together, there is a history satisfying every axiom
+    in which every object has a grounded sign, every edge of $G$ is a claim with arcs to
+    exactly its endpoints' signs, each claim is true iff its objects are not together in
+    $H$, and there are no other claims: \lean{universality}. Claims are made where neither
+    speaker has any object in reach (\lean{Univ.displaced}). \emph{Model, for every $G$ and
+    $H$.}
+\end{itemize}
+
+\subsection{Roles}
+\begin{itemize}
+  \item An unordered claim is the same event read either way round: \lean{claim_symm}.
+    Hence every faithful reading of unordered claims expresses a symmetric relation:
+    \lean{unordered_only_symmetric}. \emph{Definitional and derived.}
+  \item Succession, defined from reach and time, is asymmetric. In a concrete world it has
+    no faithful unordered reading: \lean{succession_not_unordered}. \emph{Model.}
+  \item Ordered claims that determine what they are about give every relation a faithful
+    reading: \lean{ordered_faithful}. In a model, ``A then B'' is true and ``B then A'' is
+    false: \lean{succession_ordered}, \lean{Ord.order_matters}. \emph{Derived and model.}
+\end{itemize}
+
+\subsection{Polarity}
+\begin{itemize}
+  \item Everything said is a negation: \lean{says_neg}. A centre on a claim says ``not (not
+    together)'', which holds exactly when the objects are together: \lean{affirm}. This
+    step uses classical logic. A formula and its negation are never both true:
+    \lean{no_contradiction}. \emph{Definitional and derived.}
+  \item \emph{Partial universality.} For any pairs to deny, pairs to affirm and any
+    arrangement, there is a history in which exactly those pairs are asserted, each true iff
+    the arrangement agrees, and all other pairs are unsaid: \lean{partial_universality}.
+    \emph{Model, for every choice.}
+\end{itemize}
+
+\subsection{Models and countermodels}
+\begin{itemize}
+  \item \lean{emergence}: an ostensive (two episodes and a contrast), a satisfied
+    imperative, and a pure declarative standing for an absent object, with non-transitive
+    matching.
+  \item \lean{gaze_not_center}: joint looking, with the object in reach and mutual
+    perception, is not an ostensive.
+  \item \lean{kinematics_needed}, \lean{fit_needs_kinematics}: without kinematics, a
+    ``declarative'' can occur with the object present, and its ``don't be present'' fails.
+\end{itemize}
+
+%======================================================================
+\section{How the Account Developed}
+
+The account went through several versions. Each version is preserved in the Lean
+development. The main decisions and changes, in order:
+
+\begin{enumerate}
+  \item \emph{The starting axioms.} The work began with four informal axioms: plurality,
+    contextual recognition, contextual recurrence, and a forced preservation of failed
+    relations. Examining them showed the following.
+    \begin{itemize}[nosep]
+      \item Plurality is derivable once recognition is required to be by someone else.
+      \item Recognition needs a target, and a ground; otherwise meaning could arise from
+        nothing.
+      \item Recurrence must not be an equivalence relation, or sign-types are smuggled in,
+        and it must carry its target over.
+      \item Forced preservation splits into a compulsion to attempt and the untenability of
+        indefinite failure. If forcing never lapses, these together entail resolution, so
+        ``success is not guaranteed'' requires that forcing can lapse.
+      \item A reflexive uptake, attention to a sign as such, was needed. Without it there
+        are no symbolic nodes, and forcing on an unavailable object becomes inconsistent.
+    \end{itemize}
+    (\texttt{Basic.lean}, \texttt{Theorems.lean}, \texttt{Models.lean}.)
+  \item \emph{The ostensive was being assumed.} Presence was a primitive ground for
+    recognition. It was replaced by a practical layer of reaching, grasping, mimetic
+    symmetry and restraint. The ostensive became a joint deferral, entailed by convergence,
+    symmetry and restraint. Countermodels with hierarchy and with rivalry showed that each
+    ingredient was needed. (\texttt{Originary.lean}.)
+  \item \emph{Uptake was a primitive record.} It was replaced by a definition: taking-as as
+    a kind of response. (\texttt{Behaviour.lean}.)
+  \item \emph{Catastrophe was questioned.} Violence is common and is often resolved by
+    fatigue. Restraint was replaced by exhaustion: clashes cannot recur indefinitely. The
+    ostensive then follows when desire outlasts the capacity to fight. Countermodels covered
+    endless fighting, walking away, and hierarchy. (\texttt{Behaviour.lean}.)
+  \item \emph{Refraining as a losing strategy.} On ordinary assumptions about preference,
+    mutual restraint is unstable. A division of the object afterwards (the sparagmos) was
+    considered as the payoff and rejected as an unnecessary narrative commitment. Chance,
+    meaning that any movement may occur, was adopted instead: a joint holding-back can
+    simply happen.
+  \item \emph{What makes a sign worth repeating?} Retention was introduced as an
+    unspecified function, mirroring the unspecified forcing. Without repetition, only
+    ostensives can exist. (\texttt{Retention.lean}.)
+  \item \emph{Why reaching and holding back?} Appropriation and rivalry were replaced by
+    completion and the principle that completion ends aboutness. Gaze was excluded by
+    defining directedness as a pending contact. (\texttt{Center.lean}.)
+  \item \emph{A self-licensing axiom was removed.} An axiom compelling a fetch when a sign
+    recurred in its object's absence built the imperative into the axioms. It was replaced
+    by the response principle, from which fetching follows. Forcing was then dropped
+    altogether: the permission to continue a failed relation needs no axiom, because
+    variation already provides it.
+  \item \emph{The completion system.} Directedness became a pending completion, either
+    contact or match. Kinematics was found to be necessary when the proof of salience
+    failed without it. (\texttt{Completion.lean}.)
+  \item \emph{The imperative is not a prerequisite.} The declarative requires the absence of
+    its object, not a failed imperative. Gans's ``don't'', addressed to the object, led to
+    the direction-of-fit results. (\texttt{Fit.lean}.)
+  \item \emph{Falsehood was at first impossible.} Every pure declarative came out true.
+    Drift, and the arbitrariness it produces, turned out to be the precondition of
+    falsehood. (\texttt{Falsehood.lean}.)
+  \item \emph{From nodes to graphs.} A claim became a node with outgoing ``about'' arcs, not
+    an arc between nodes. This keeps a single kind of arc, accommodates symmetric relations
+    and relations with more than two terms, and leads to universality.
+    (\texttt{Graphs.lean}.)
+  \item \emph{Firstness.} Once it was noticed that a simultaneous centre contains no
+    uptake, a centre was required to have one participant first and another responding,
+    following Katz. Lineage became rooted in the first movement.
+  \item \emph{Dependent response.} ``In response to'' was strengthened from ``perceived,
+    then a movement within the window'' to regularity with contrast. A counterfactual
+    criterion was rejected because it would need dispositions as primitives. A
+    single-episode mark was rejected because coincidences leave the same marks.
+  \item \emph{Roles and polarity.} Ordered claims and succession gave relations with roles
+    (\texttt{Roles.lean}). The closed-world problem of negative-only claims led to the
+    positive as a negation of a negation, and to partial universality
+    (\texttt{Polarity.lean}).
+  \item \emph{The paper.} The rule against self-licensing, the target end state, and the
+    convention for marking unverified passages were made explicit while writing Section~1.
+\end{enumerate}
+
+%======================================================================
+\section{Findings}
+
+\subsection{Firstness}
+\begin{enumerate}
+  \item \emph{Firstness is required by the notion of response.} A simultaneous joint
+    holding-back contains no uptake, because neither actor responds to the other. For a
+    centre to contain any taking-as, one actor must act first and the other respond.
+    Katz's firstness does not need to be posited. It follows from what a response is.
+  \item \emph{Firstness reappears as order inside claims.} Unordered claims can express
+    only symmetric relations. Temporal order inside a claim, which is firstness at the
+    level of the claim, is what makes relations with roles expressible.
+  \item \emph{The first actor fixes the form.} The first actor's movement is the sign and
+    the second's is the uptake, so lineage descends from the first. This gives a minimal,
+    non-political reading of the importance Katz assigns to firstness. The stronger reading,
+    on which the first holds authority, is not needed by the derivation.
+  \item \emph{Firstness locates the risk.} Holding back first is exposed, since the other
+    may simply take. Only the response turns the first holding-back into a sign.
+\end{enumerate}
+
+\subsection{Gans's account}
+\begin{enumerate}
+  \item \emph{The aborted gesture survives as the core.} When shared reference to a centre
+    is required to be peaceful and the same for both actors, joint holding-back is what
+    remains, and the ostensive no longer needs to be assumed.
+  \item \emph{Holding back is needed for a different reason.} It is needed not because of
+    violence, but because completion ends aboutness: a completed reach is getting, not
+    pointing. Desire and rivalry become one possible motive for holding back, not a
+    condition of it.
+  \item \emph{The narrative content is not load-bearing for these results.} Mimetic crisis,
+    catastrophic violence, mimetic symmetry and the sparagmos are not used by the
+    possibility, necessity or universality results. Chance and retention take their place.
+    In the spirit of Gans's opening sentence, they are mysteries that need not be
+    multiplied.
+  \item \emph{Gaze is not enough.} Joint looking at a reachable object, with mutual
+    perception, is not an ostensive. There is no completion to withhold. This supports
+    Gans's choice of a gesture of appropriation over attention alone.
+  \item \emph{The imperative is a sibling of the declarative, not its precursor.} The
+    declarative requires the object's absence, not a failed imperative. Gans's own
+    description, in which the ``don't'' is addressed to the object, fits this reading
+    well.
+  \item \emph{The declarative is an imperative already obeyed.} This is now a theorem about
+    direction of fit. The imperative is unsatisfied when made and fits the world only after
+    it changes. The declarative's ``don't be present'' is satisfied when made.
+  \item \emph{The interdiction is redirected.} In the ostensive, the actors refrain from the
+    present object. In the declarative, the object ``refrains'' from being present.
+  \item \emph{The declarative needs a kinematic principle.} Reproducing a reach where the
+    object is reachable reaches it. Without this principle, attention to a gesture as such
+    could occur with the object present, and the tie between the declarative and absence is
+    lost.
+  \item \emph{The first signs are always true.} Falsehood requires drift away from the shape
+    of the reach the sign descends from. Arbitrariness is acquired, not original, and it is
+    the precondition of falsehood.
+  \item \emph{Necessity becomes ``the only possible form''.} Gans presents the declarative
+    as what must happen when the imperative fails. Here, nothing compels anyone to continue.
+    But if a failed relation is continued, the response can only take the form of the
+    imperative (if the object can be reached) or of the declarative (if it cannot).
+  \item \emph{A sign needs repetition.} A one-off coincidence is not a sign. The first
+    holding-back becomes a sign retroactively, when it is repeated and answered.
+  \item \emph{The node is a reified relation.} The first symbolic node is a relation made
+    into something one can refer to. A claim is the same operation one level up, and it is
+    nothing more than two declaratives made by the same movements.
+  \item \emph{Negation comes first, and affirmation costs classical logic.} The priority of
+    the ``don't'' is formally coherent. Everything said is a negation, and the positive is
+    a negation of a negation. Recovering the positive from it uses excluded middle.
+  \item \emph{Many natural axioms secretly mention uptake.} Several candidate axioms,
+    including forced preservation and reflexive uptake, turned out to presuppose the sign.
+    This motivated the rule against self-licensing.
+\end{enumerate}
+
+%======================================================================
+\section{Open Problems}
+
+\begin{itemize}
+  \item \emph{Minimality.} Countermodels are still needed for the physical axioms, for
+    perception and for the resemblance axioms.
+  \item \emph{Likelihood.} The results are about possibility. A probabilistic or dynamic
+    version, with retention and variation given quantitative form, is open.
+  \item \emph{Response.} Regularity with contrast is a minimal criterion: two episodes and
+    one contrast, and common causes are not excluded.
+  \item \emph{Two kinds of completion.} Contact and match are only partly unified, and
+    ``incomplete match'' needs a more precise account.
+  \item \emph{Scope.} The account covers two actors at a time, coarse time, and
+    co-presence realized by passive ``witnesses''. Roles exist only for succession, and
+    polarity only for togetherness. Properties, quantification and deeper recursion of
+    claims are open.
+  \item \emph{Comparing accounts.} Apply the self-licensing test to other accounts,
+    including Gans's own scene and Lewis--Skyrms signaling games. It is conjectured that the
+    present account generates the frame that signaling games presuppose.
+  \item \emph{Verification.} The open items in \texttt{VERIFYING.md} need checking, along
+    with the interpretations of Gans and Katz against their texts.
+  \item \emph{Housekeeping.} The earlier layers of the Lean development use different
+    definitions, and could be archived or unified with the current system.
+\end{itemize}
+
 
 \begin{thebibliography}{99}
 
