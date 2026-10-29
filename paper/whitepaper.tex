@@ -1,12 +1,21 @@
 \documentclass[11pt]{article}
 
-\usepackage[margin=1.1in]{geometry}
+\usepackage[left=1in, right=2.1in, top=1in, bottom=1in, marginparwidth=1.65in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{microtype}
 \usepackage{amsmath,amssymb}
 \usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage[textsize=scriptsize]{todonotes}
 \usepackage[hidelinks]{hyperref}
+
+% Passages drafted with AI assistance and not yet checked against their sources.
+% List them all with: grep -n unverified whitepaper.tex
+\newcommand{\unverified}[1]{%
+  \todo[color=orange!25, bordercolor=orange!70!black, linecolor=orange!70!black]{%
+    \textbf{Unverified (AI-drafted).} #1}}
 
 \title{From Relation to Node:\\[0.3em]
 \large Minimal Conditions for the Emergence of Grounded Symbolic Graphs,\\
@@ -19,156 +28,472 @@ with a Machine-Verified Formalization in Lean~4}
 
 \maketitle
 
+\begin{center}
+\fbox{\parbox{0.92\linewidth}{\small
+\textbf{Status.} This document is a work in progress. It is incomplete, and all of its
+parts, including the axioms, definitions, results and their interpretation, are subject
+to revision and refinement. Passages marked in the margin were drafted with AI
+assistance and have not yet been checked against their sources.}}
+\end{center}
+
+\vspace{1em}
+\begin{flushright}
+\emph{Mysteries should not be multiplied beyond necessity.}\\[0.2em]
+--- Eric Gans, \emph{The Origin of Language} (1981)
+\end{flushright}
+
 % TODO: abstract, once the later sections are drafted.
 
 \section{Motivation and Background}
 
-\subsection{The originary hypothesis}
+\subsection{Theories of language origin}
 
-Eric Gans's Generative Anthropology proposes that language, and with it the
-distinctively human forms of culture, originated in a single kind of event: the
-\emph{originary scene} \cite{Gans1981,Gans1993}. In Gans's account, a group of
-hominids converge, through mimetic desire, on a single desirable object. Mutual
-imitation intensifies their rivalry beyond what an animal dominance hierarchy can
-contain, and the group faces a violent crisis. The crisis is deferred when the
-gesture of appropriation is aborted. The aborted gesture, shared and reciprocally
-understood, becomes the first sign: an \emph{ostensive} that designates the object
-as a centre which no one may take. The scene concludes in the \emph{sparagmos},
-the collective division of the object.
+Theories of language origin attempt to explain how a species without language came to
+have it. The field is broad. Among its main families are the following.
+\begin{itemize}[nosep]
+  \item Gestural accounts, on which language grew out of manual communication and
+    pantomime \cite{Corballis2002,Arbib2012}.
+  \item Social accounts, on which language took over the role of grooming in maintaining
+    group bonds \cite{Dunbar1996}.
+  \item Intention-based accounts, which ground meaning in the expression and recognition
+    of communicative intentions \cite{Grice1957,Tomasello2008}.
+  \item Game-theoretic accounts, in which signals acquire meaning as stable conventions
+    among interacting agents \cite{Lewis1969,Skyrms2010}.
+  \item Computational accounts, which locate the decisive step in the appearance of a
+    single combinatorial operation \cite{BerwickChomsky2016}.
+\end{itemize}
+Two problems recur across these families, and they help explain why the question of
+language origin has often been treated with suspicion.
 
-From the ostensive, Gans derives the further elementary forms of language in
-sequence. The \emph{imperative} arises from an ostensive made in the absence of its
-referent, which the hearer answers by supplying the missing object. The
-\emph{declarative} arises when the imperative cannot be fulfilled, and the hearer
-preserves the relation symbolically instead. Later work in the tradition, notably
-by Adam Katz, develops related notions, among them the \emph{centre} toward which
-the attention of a scene converges, and the \emph{firstness} of the participant who
-defers first.
-% TODO: add a reference for Katz on the centre and on firstness.
+\paragraph{Presupposition.}
+Many accounts take as given, in some form, capacities closely related to the ones whose
+origin is at issue. This is not always an oversight; often it is a deliberate choice of
+what is to be explained. Three examples illustrate the point.
 
-The ambition of the theory is captured in its name. It is \emph{generative}: it
-claims to derive complex linguistic and cultural forms from a minimal beginning.
-Gans presents the originary hypothesis as a minimal one, positing a single event
-and asking what must follow from it \cite{Gans1993,Katz2007}.
+\begin{itemize}
+  \item \emph{Game-theoretic accounts.} Lewis--Skyrms signaling games show how signals
+    can acquire meaning without design or prior agreement. Skyrms extends the framework
+    so that agents begin with no signals at all and invent new ones through a
+    reinforcement process \cite{Skyrms2010,AlexanderSkyrmsZabell2012}. What these models
+    take as given is the interaction itself: a sender whose behaviour depends on a state
+    of the world, a receiver whose action depends on the sender's behaviour, and payoffs
+    that reward a match. The models explain which behaviour comes to mean which state.
+    That one participant's behaviour is the kind of thing the other's action responds to
+    \emph{as} a signal is the frame within which they work.
+  \item \emph{Intention-based accounts.} These analyze meaning through the expression
+    and recognition of communicative intentions \cite{Grice1957}. As analyses of
+    meaning, they are not committed to any story of origin. As a basis for one, they
+    inherit the observation that an intention to communicate is itself a
+    representational state, so that thought is presupposed prior to language.%
+    \unverified{The thought-priority objection to intention-based accounts needs a
+    citation. A candidate is Devitt, ``Three Mistakes About Semantic Intentions''.}
+    Tomasello's account is explicit on this point. It posits shared intentionality,
+    joint attention and cooperative motives as a biological infrastructure that evolved
+    before conventional language and made it possible \cite{Tomasello2008}. The question
+    of reference is moved to the evolution of that infrastructure, not answered from
+    nothing.
+  \item \emph{Computational accounts.} Berwick and Chomsky locate the decisive innovation
+    in a single combinatorial operation, Merge, and explain how hierarchical structure
+    is built from lexical atoms \cite{BerwickChomsky2016}. They accept that words
+    preceded grammar, and critics have pointed out that the origin of those atoms is left
+    largely unaddressed \cite{StuddertKennedyTerrace2017}.
+\end{itemize}
+
+None of these observations is a refutation. Each account addresses its own question, and
+every model must take something as given, including the one developed here, which
+assumes perception and response. The point concerns where the line is drawn. In each
+case, the step by which some piece of behaviour first comes to \emph{stand for} something
+is not part of what is explained.
+
+\paragraph{Evidence.}
+Language leaves no fossils. The events in question are prehistoric, unobservable and
+unrepeatable, and the indirect evidence from anatomy, archaeology, comparative cognition
+and genetics constrains them only weakly. In 1866 the Soci\'et\'e de Linguistique de
+Paris went as far as to exclude communications on the origin of language from its
+proceedings \cite{Lyons1991}. Much more recently, a review by leading researchers
+concluded that the central questions remain largely out of reach of the available
+evidence \cite{Hauser2014}. Theories of origin are therefore often regarded as
+untestable, and dismissed as just-so stories: narratives that fit what they explain, but
+that no observation could refute.
+
+These two problems point toward a particular kind of contribution. A theory of origin
+that cannot be tested historically may still be assessed in another way: by asking
+whether its conclusions \emph{follow} from its assumptions, and which assumptions they
+require. A claim of the form ``if these conditions hold, this structure can arise'', or
+``must have this form'', is not a claim about what happened. It can be checked
+deductively, and its assumptions can then be examined individually, some of them
+empirically, for plausibility. This does not make an origin story testable as history. It
+makes it accountable as an argument.
+
+\paragraph{The originary hypothesis.}
+Eric Gans's Generative Anthropology is notable for addressing the first problem
+directly, and in a way that lends itself to this kind of assessment
+\cite{Gans1981,Gans1993}. Several features distinguish it.
+\begin{enumerate}
+  \item It starts from the sign itself. It asks what must happen for a sign to exist at
+    all, not how pre-existing contents come to be communicated.
+  \item It derives the sign from non-semiotic behaviour. On Gans's account, the first
+    sign is an aborted gesture of appropriation: a practical act that, by being
+    interrupted, comes to designate instead of to seize. This gives a concrete mechanism
+    by which representation could arise without being presupposed.
+  \item The sign is shared from the outset. It arises in a scene among several
+    participants, as a mutually understood gesture, so meaning is not a private state
+    later made public.
+  \item It is generative. A single minimal hypothesis is followed by a derivation of
+    further elementary forms of language in sequence. A claimed derivation has internal
+    structure that can be examined step by step.
+\end{enumerate}
+\emph{The Origin of Language} opens with the sentence ``Mysteries should not be
+multiplied beyond necessity'' \cite{Gans1981}. It is a version of Ockham's razor, and it
+states the ambition of the theory: to explain the origin of the human while assuming as
+little as possible.
+
+The hypothesis runs as follows. A group of hominids converge, through mimetic desire, on
+a single desirable object. Mutual imitation intensifies their rivalry beyond what an
+animal dominance hierarchy can contain,%
+\unverified{The role of the dominance hierarchy in Gans's scene has not been confirmed
+in a source. Check Gans 1981 or 1993.}
+and the group faces a violent crisis. The crisis is deferred when the gesture of
+appropriation is aborted. The aborted gesture, shared and reciprocally understood,
+becomes the first sign: an \emph{ostensive} that designates the object as a centre which
+no one may take. The scene concludes in the \emph{sparagmos}, the collective division of
+the object.
+
+From the ostensive, Gans derives the further forms in sequence. The \emph{imperative}
+arises from an ostensive made in the absence of its referent, which the hearer answers by
+supplying the missing object. The \emph{declarative} arises when the imperative cannot be
+fulfilled, and the hearer responds with a negation of the object's presence.%
+\unverified{This summary of the imperative (the ``inappropriate ostensive'') and the
+declarative (the negative ostensive) was confirmed only through secondary commentary.
+Check against Gans 1981.}
+
+Later work in the tradition develops related notions. Adam Katz, who also writes as
+Dennis Bouvard, introduced into the originary scene the \emph{firstness} of a single
+participant who emits the sign before the others \cite{Katz2005}; see also
+\cite{Gans2007}. He has also developed an approach organized around the \emph{centre}
+toward which the attention of a scene converges.%
+\unverified{Katz on the centre has not been read directly. A candidate source is Katz,
+``Generative Anthropology as the One Big Discipline'', \emph{Anthropoetics} XXIV, no.~2
+(2019).}
 
 \subsection{The problem: narrative content of uncertain necessity}
 
-This work grows out of a long engagement with Gans's writings and those of Adam
-Katz, and out of a persistent dissatisfaction with one feature of the account. The
-originary scene is not only a logical structure. It is also a story, and the story
-has specific content: mimetic desire as the source of convergence on the object,
-mimetic rivalry as the source of crisis, the prospect of catastrophic violence as
-what compels deferral, a sacred centre, and a sparagmos that resolves the scene by
-division. This content is inherited in part from Ren\'e Girard's mimetic theory
-\cite{Girard1977}. Each element is anthropologically suggestive, and each ties the
-origin of language to themes the theory develops elsewhere, such as the sacred,
-ethics and exchange.
+The present work grows out of a long engagement with the writings of Gans and Katz, and
+out of a specific dissatisfaction with one feature of the account. Gans's hypothesis
+avoids presupposing the sign. The scene that does this work, however, carries
+substantial narrative content:
+\begin{itemize}[nosep]
+  \item \emph{convergence}: mimetic desire draws the participants to a single object;
+  \item \emph{crisis}: mimetic rivalry exceeds what an animal dominance hierarchy can
+    contain;
+  \item \emph{deferral}: the prospect of violence motivates the abortion of the gesture
+    of appropriation;
+  \item \emph{centre}: the designated object becomes a sacred centre;
+  \item \emph{resolution}: the scene ends in the sparagmos, in which the tension the sign
+    has deferred is discharged on the object, not on other members of the group.%
+    \unverified{This description of the sparagmos comes from an \emph{Anthropoetics}
+    page whose author has not been confirmed. Find a citable source.}
+\end{itemize}
+Much of this content is inherited from Ren\'e Girard's mimetic theory
+\cite{Girard1977}. Gans accepts that language originates in a mimetic crisis, while
+rejecting the scapegoat mechanism as sufficient to produce a sign. The sparagmos is in
+part his way of incorporating Girard's account of sacrificial violence.%
+\unverified{The relation between Gans and Girard summarized here has been confirmed
+only through an encyclopedia entry. Find a primary or scholarly source.}
+Each element is anthropologically suggestive, and each ties the origin of language to
+themes the theory develops elsewhere, such as the sacred, ritual, ethics and exchange.
 
-It is not evident, however, which of these elements the derivation of the sign and
-its forms actually requires. Several are open to objection on their own terms.
-Violence among humans and other animals is common and rarely catastrophic; disputes
-end through exhaustion or through hierarchy without producing signs. Refraining from
-an object one wants is, on ordinary assumptions about preference, a losing strategy,
-so a deferral that is supposed to be motivated by self-interest needs further
-explanation. And a collective division of the object adds a stage whose necessity
-for the emergence of reference is unclear. Much of the narrative therefore appears
-arbitrary relative to what it is meant to explain.
+Which of these elements is actually needed is a natural question for an account that
+begins by refusing to multiply mysteries. It has been raised within the tradition itself.
+Sackeroff, for example, identifies the mechanism of deferral as a point of difficulty,
+observing that the account draws on two different sources of motivation: animal
+appetite for the object, and a distinctively human investment in the sign
+\cite{Sackeroff2015}.%
+\unverified{The issue number of Sackeroff's article was inferred from its URL. Confirm.}
+The present work takes up this internal question in a formal setting.
 
-The issue is not whether these elements are plausible. It is whether they are
-\emph{load-bearing}. If the derivation depends on them, it inherits their
-contingency and takes on the character of a just-so story. If it does not, it
-should be possible to state the derivation without them, and doing so would show
-what the generative core of the theory actually is.
+Several of the scene's elements are open to objection on their own terms.
+\begin{itemize}
+  \item \emph{Violence.} Among primates, conflict is frequent but usually limited, and it
+    is often followed by reconciliation \cite{deWaal1989}. Evolutionary game theory
+    explains why contests between members of the same species usually take the form of
+    limited, not escalated, fighting \cite{MaynardSmithPrice1973}. Disputes that end in
+    exhaustion, hierarchy or reconciliation do not by themselves produce signs. The
+    account's answer is that mimetic intensity has disabled these ordinary resolutions,
+    which is itself one of the elements whose necessity is in question.
+  \item \emph{Deferral as a strategy.} In the Hawk--Dove game, mutual restraint is not
+    stable: against a participant who refrains, taking the resource does better.%
+    \unverified{The Hawk--Dove game postdates Maynard Smith and Price (1973). Cite the
+    right source, probably Maynard Smith, \emph{Evolution and the Theory of Games}
+    (1982).}
+    A deferral that rests on self-interest therefore needs further explanation. The
+    account supplies it through the intensity of mimetic desire and the threat of
+    collective violence, again through the narrative content.
+  \item \emph{Division.} By the time the sparagmos begins, the aborted gesture has
+    already designated the object. Its role in the origin of distribution and of the
+    sacred is not in question here. Its role in the emergence of reference is unclear.
+\end{itemize}
 
-\subsection{Aim: minimal conditions for generativity}
+The issue is therefore not whether these elements are plausible. It is whether they are
+\emph{load-bearing}. If the derivation of the sign and its forms depends on them, it
+inherits their contingency, and the charge of a just-so story applies. If it does not,
+the derivation should be statable without them.
 
-The present work attempts to separate that core from its narrative content. Its aim
-is to identify a minimal set of assumptions under which it can be \emph{proved} that
-symbolic structure arises from conditions in which it is absent, and to make every
-assumption explicit. Generativity is given three precise senses:
+The present work follows in the spirit of Gans's opening sentence, and applies it to the
+originary scene itself. Mimetic rivalry, catastrophic violence and the sparagmos are
+explanatory commitments, and each is a candidate for a mystery multiplied beyond
+necessity. The question is whether the derivation of the sign and its forms requires
+them. If it does not, the principle with which Gans begins recommends setting them aside.
 
+\subsection{The target: a grounded symbolic graph}
+
+A generative account needs a destination as well as a starting point. Both can be stated
+using accepted notions of the sign.
+
+\paragraph{The starting state.}
+There are actors and physical objects. There are contexts: at each time, which actors are
+present and which objects are within whose reach. Actors move, and some movements are
+directed at objects. All the relations in this state are momentary and local. Each holds
+between particular actors and things, at a particular time, in a particular context.
+There are no symbolic nodes.
+
+\paragraph{The sign as a relation.}
+The accepted definitions of the sign are relational. For Saussure, the linguistic sign
+joins a concept and an acoustic image, and its value is fixed only by its differences
+from other signs in the system.%
+\unverified{Add a citation, with page, to the \emph{Course in General Linguistics}.}
+For Peirce, ``a sign, or representamen, is something which stands to somebody for
+something in some respect or capacity'' \cite[2.228]{PeirceCP}. This is a relation among
+a sign, an object and an interpretant, and it holds \emph{for} someone. Morris divides
+the study of signs by the relations a sign can enter into: to other signs, to objects,
+and to its interpreters \cite{Morris1938}.
+
+On each account, a sign is not a thing with a property but a term in relations. Among
+those relations are relations to the \emph{actors} who produce and interpret it. The
+minimal mathematical structure of relations is a graph. Relations among more than two
+terms can be represented as a hypergraph, or encoded in an ordinary graph by an incidence
+construction, in which each instance of a relation becomes a node joined to its
+arguments. The relevant graphs are many-sorted: their vertices include actors, physical
+objects, and the acts by which actors relate to objects and to one another.
+
+\paragraph{Actors, time and context.}
+Every such relation is indexed by actors, by a time and by a context. The most
+elementary sign relation, ostension, shows all three at once. \emph{This}, \emph{here} and
+\emph{now} designate only within the situation in which they are produced, for those who
+share it. A pointing gesture relates one actor, by way of a movement, to an object, at one
+moment and in one place, and only for another actor who takes it up. The relation does
+not outlast the act.
+
+Symbolic reference is what escapes this indexing. Hockett lists \emph{displacement}, the
+capacity to refer to what is removed in time or place from the moment of speaking, among
+the design features of human language \cite{Hockett1960}. Deacon, building on Peirce,
+argues that symbolic reference is grounded in indexical reference but depends on
+relations among symbols themselves \cite{Deacon1997}. In graph terms, a symbolic node is
+something that persists across contexts and across occasions of use: different actors
+can re-identify it, at other times and in other places, and it can enter into further
+relations there.
+
+\paragraph{The end state.}
+A generative account must arrive at a graph with the following properties.
+\begin{enumerate}
+  \item \emph{Nodes that stand for things.} Some vertices are symbolic, and stand for
+    objects to actors.
+  \item \emph{Persistence beyond the context of origin.} A symbolic node can be
+    re-identified at another time, in another place and by another actor, including in
+    the absence of what it stands for.
+  \item \emph{Relations among symbolic nodes.} Symbolic nodes stand in relations to one
+    another, not only to objects, and some of these relations have \emph{roles}, where it
+    matters which term is which.
+  \item \emph{Grounding.} Every symbolic node can be traced back to the physical world,
+    so there are no free-floating symbols.
+  \item \emph{Truth and falsity.} What is said with symbolic nodes has conditions under
+    which it holds, and it can fail.%
+    \unverified{Hockett and Altmann's ``prevarication'' may be the right citation here.
+    Check.}
+  \item \emph{Partiality.} Relations can be affirmed, denied, or left unsaid, without
+    silence having to carry information.
+  \item \emph{Open-endedness.} Any finite relational structure over grounded objects can
+    be expressed.
+\end{enumerate}
+
+\paragraph{The generative task.}
+The task is to get from the starting state to the end state using only what the starting
+state contains, and operations on it applied to their own products. Nothing symbolic may
+be assumed along the way. Several features commonly attributed to human language lie
+outside the target: the vocal-auditory channel, duality of patterning, and cultural
+transmission across generations. The account addresses the emergence of reference and of
+relational structure, not of speech.
+
+The target also makes precise a hypothesis that motivated the work:
+\begin{itemize}[nosep]
+  \item the ostensive establishes an edge between actors and an object within a single
+    context;
+  \item the imperative is such an edge whose object is missing from the actors' current
+    context;
+  \item the declarative yields a node: a relation that has itself become something the
+    actors can refer to, and that persists across contexts.
+\end{itemize}
+The formalization supports a sharper version of the last point. The first symbolic node
+is a \emph{reified relation}, and relations between nodes arise by the same operation
+applied one level up.
+
+\subsection{Aim: a minimal axiom set that does not license itself}
+
+The aim is to find a minimal set of axioms under which the end state of
+Section~1.3 can be reached from the starting state, and to prove that it can.
+
+\paragraph{The rule against self-licensing.}
+An axiom set \emph{licenses itself} when what it is supposed to generate is built into its
+assumptions, so that the derivation only returns what was put in. To exclude this, every
+axiom set considered here must satisfy two conditions.
+\begin{enumerate}
+  \item \emph{Base vocabulary only.} Axioms may speak only of what the starting state
+    contains: actors, physical objects, times, movements, reach, contact, perception, and
+    resemblance between movements. They may not mention signs, meaning, reference,
+    uptake, the ostensive, the imperative, the declarative, symbolic nodes, claims or
+    truth, nor any notion defined from these.
+  \item \emph{Target notions by definition only.} Every notion that belongs to the end
+    state is introduced by an explicit definition in the base vocabulary. A definition
+    adds no constraint on what can happen: it names a pattern, which may or may not
+    occur.
+\end{enumerate}
+Under these conditions, every property of the end state that the account establishes is a
+theorem, derived from axioms that do not mention it.
+
+\paragraph{Definitions are hypotheses.}
+The rule shifts the weight of the account onto its definitions: what it is for a movement
+to be taken up as being about something, or for a pattern of responses to constitute a
+shared centre. A definition can smuggle in as much as an axiom can. Two safeguards apply.
+Definitions are drawn as closely as possible from accepted notions of the sign, and they
+are stated as explicit hypotheses about what the defined notion consists in, open to
+dispute and to replacement by alternatives.
+
+\paragraph{Generativity relative to the target.}
+With the target fixed and the rule in force, the aim has three parts.
 \begin{description}[leftmargin=1.5em, style=nextline]
-  \item[Existence.] There is a model of the assumptions in which the structure arises
-    from a prior state that lacks it.
-  \item[Necessity.] In every model of the assumptions, whenever the structure exists,
+  \item[Existence.] There is a model of the axioms in which the end state, or the relevant
+    part of it, arises from a starting state that lacks it.
+  \item[Necessity.] In every model of the axioms, whenever part of the end state exists,
     it has a determinate origin and order.
-  \item[Universality.] The operations that produce the first symbolic structures
-    suffice to produce any finite structure of the relevant kind.
+  \item[Universality.] The operations that produce the first symbolic structures suffice
+    for open-endedness: any finite relational structure over grounded objects can be
+    reached.
 \end{description}
 
-\noindent The aim is not to show that such emergence was inevitable, nor that it
-happened in one particular way. It is to show that emergence is possible under weak
-conditions, and that its form is constrained by those conditions.
+\paragraph{Minimality.}
+An axiom set is minimal when each axiom is needed: for each axiom there is a model of the
+others in which some property of the end state fails. Minimality is shown axiom by axiom,
+by exhibiting such countermodels.
 
-\subsection{Why graphs}
+The aim is not to show that the end state was inevitable, nor that it was reached in one
+particular way. It is to show that it can be reached under assumptions that are weak,
+explicit and free of the target, and to identify which assumptions each part of it
+requires.
 
-The structure whose emergence is at issue is taken to be relational structure in
-general, in the form of graphs. Any finite relational system can be represented as a
-graph. Relations among more than two terms can be encoded by an incidence
-construction, in which each relation instance becomes a node joined to its
-arguments. The question of how language begins is therefore approached
-structurally. Consider a world that contains physical objects and physical
-relations among them, but no symbolic nodes. How can symbolic nodes, and relations
-among them, arise in such a world? Physical objects are assumed. Symbolic nodes are
-not.
-
-This framing makes precise a specific hypothesis that motivated the work: that
-\begin{itemize}[nosep]
-  \item the ostensive establishes a contextual relation, an edge;
-  \item the imperative attempts to complete an unsatisfied relation;
-  \item the declarative yields an independently representable symbolic object, a node.
-\end{itemize}
-One outcome of the formalization is a sharper version of this hypothesis. The first
-symbolic node is best understood as a \emph{reified relation}: a relation that has
-itself become something one can refer to. Relations between nodes, in turn, arise by
-the same operation applied one level up.
+\paragraph{Comparing accounts.}
+The same rule suggests a way of comparing accounts. Formalize an account, separate its
+primitives into base vocabulary and anything semiotic, and ask whether its target notions
+can be defined from the base part alone. Padoa's method from logic gives a standard test:
+a notion is not definable from the other primitives if two models agree on all of them
+but disagree on that notion. One feature that may signal self-licensing is a primitive
+kind of act whose only role is to be responded to, such as the costless signals of a
+signaling game. Any such result holds only relative to a particular formalization, and
+only relative to the present target, the emergence of sign-hood. It is not a criticism
+of what other accounts set out to explain. Applying the test to other accounts,
+including Gans's own scene, is left as work in progress.
 
 \subsection{Rival orderings}
 
-A further motivation is comparative. The sequence ostensive, imperative, declarative
-is one reading among several. Other interpretations, for instance accounts that give
-priority to the declarative, plausibly license themselves within their own axioms:
-each ordering may be derivable once suitable assumptions are made. If so, the
-substantive question is not which ordering is correct in the abstract. It is which
-assumptions each ordering requires, and how plausible those assumptions are. A
-framework in which every assumption is explicit allows such alternatives to be
-compared on equal terms. The present work develops one such framework and records,
-for each result, the assumptions on which it depends.
+A further motivation is comparative. The sequence ostensive, imperative, declarative is
+one reading among several, and other readings, for instance ones in which the
+declarative is primary, are possible.%
+\unverified{Name proponents of declarative-first or other orderings, or rephrase as the
+author's conjecture.}
+Under the rule of Section~1.4, the choice between them becomes precise. An account that
+builds a particular mode into its axioms licenses its own ordering. The real question is
+which orderings can be generated from axioms in the base vocabulary, and under which
+assumptions. The framework developed here bears on this directly. In it, the declarative
+requires the \emph{absence} of its object, but not a prior failed imperative. The
+imperative and the declarative appear as two responses to absence, not as successive
+stages.
 
 \subsection{Why machine verification}
 
-Arguments in humanistic theory often rely on steps that are intuitively compelling
-but unstated. Formalization in a proof assistant forces every assumption to be
-written down and every inference to be checked. All results reported here are
-formalized in the Lean~4 proof assistant \cite{deMoura2021} and checked in full, with
-no unproven steps.
+Arguments in humanistic theory often rely on steps that are intuitively compelling but
+unstated. Formalization in a proof assistant forces every assumption to be written down
+and every inference to be checked. All results reported here are formalized in the
+Lean~4 proof assistant \cite{deMoura2021} and checked in full, with no unproven steps.
 
 The process was itself informative. Several assumptions that the informal narrative
 leaves implicit were exposed only when a proof failed without them. Among them:
 \begin{itemize}[nosep]
   \item a kinematic principle linking a reproduced gesture to the object it was
     originally directed at;
-  \item the requirement that one participant defer before another, which corresponds
-    to Katz's firstness;
+  \item the requirement that one participant act before another, which corresponds to
+    Katz's firstness;
   \item the dependence of falsehood on the drift of signs away from their iconic
     origins;
-  \item the reliance of affirmation, derived as the negation of a negation, on
-    classical logic.
+  \item the reliance of affirmation, derived as the negation of a negation, on classical
+    logic.
 \end{itemize}
-Formalization also makes it possible to say exactly which statements are derived
-and which are merely definitions. The paper marks this distinction throughout.
+Formalization also makes it possible to say exactly which statements are derived and
+which are merely definitions. The paper marks this distinction throughout.
 
 \subsection{Outline}
 
-% TODO: revise once the later sections are drafted.
-Section~2 introduces the primitives and axioms, which concern only bodies, movements,
-reach and resemblance. Section~3 defines taking-as, the centre and the elementary
-modes as patterns of response. Section~4 reports the structural results that hold in
-every model. Section~5 reports the existence and universality results. Section~6
-discusses the results, their relation to Generative Anthropology, and directions for
-further work.
+Section~2 introduces the primitives and axioms, which concern only actors, movements,
+reach and resemblance. Section~3 defines taking-as, the centre, dependent response and the
+elementary modes as patterns of response. Section~4 reports the results that hold in every
+model: the origin of signs, the form of the imperative, the declarative's dependence on
+absence, direction of fit, and the conditions for falsehood. Section~5 reports the results
+on graphs: claims, universality, roles and polarity. Section~6 reports the models and
+countermodels that establish existence and show which assumptions are needed. Section~7
+discusses the relation to Generative Anthropology, open problems, and directions for
+collaborative work. Table~\ref{tab:roadmap} shows where each property of the end state is
+reached.
 
-\begin{thebibliography}{9}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}p{0.36\linewidth}p{0.6\linewidth}@{}}
+\toprule
+Property of the end state & Where it is reached \\
+\midrule
+1. Nodes that stand for things & declarative and lineage (Section 3) \\
+2. Persistence & re-presentation; displaced claims (Sections 4--5) \\
+3. Relations, with roles & claims and ordered claims (Section 5) \\
+4. Grounding & content traces to an object once within reach (Section 4) \\
+5. Truth and falsity & falsehood requires drift (Section 4) \\
+6. Partiality & polarity; partial universality (Section 5) \\
+7. Open-endedness & universality (Section 5) \\
+\bottomrule
+\end{tabular}
+\caption{Where each property of the end state is reached.}
+\label{tab:roadmap}
+\end{table}
+
+\begin{thebibliography}{99}
+
+\bibitem{AlexanderSkyrmsZabell2012}
+J.~M. Alexander, B.~Skyrms and S.~L. Zabell.
+\newblock Inventing new signals.
+\newblock \emph{Dynamic Games and Applications}, 2012.
+\newblock doi:10.1007/s13235-011-0027-2.
+
+\bibitem{Arbib2012}
+M.~A. Arbib.
+\newblock \emph{How the Brain Got Language: The Mirror System Hypothesis}.
+\newblock Oxford University Press, New York, 2012.
+
+\bibitem{BerwickChomsky2016}
+R.~C. Berwick and N.~Chomsky.
+\newblock \emph{Why Only Us: Language and Evolution}.
+\newblock MIT Press, Cambridge, MA, 2016.
+
+\bibitem{Corballis2002}
+M.~C. Corballis.
+\newblock \emph{From Hand to Mouth: The Origins of Language}.
+\newblock Princeton University Press, Princeton, 2002.
 
 \bibitem{deMoura2021}
 L.~de Moura and S.~Ullrich.
@@ -176,27 +501,112 @@ L.~de Moura and S.~Ullrich.
 \newblock In \emph{Automated Deduction -- CADE 28}, Lecture Notes in Computer
   Science 12699, pages 625--635. Springer, 2021.
 
+\bibitem{deWaal1989}
+F.~de Waal.
+\newblock \emph{Peacemaking among Primates}.
+\newblock Harvard University Press, Cambridge, MA, 1989.
+
+\bibitem{Deacon1997}
+T.~W. Deacon.
+\newblock \emph{The Symbolic Species: The Co-evolution of Language and the Brain}.
+\newblock W.~W. Norton, New York, 1997.
+
+\bibitem{Dunbar1996}
+R.~Dunbar.
+\newblock \emph{Grooming, Gossip, and the Evolution of Language}.
+\newblock Harvard University Press, Cambridge, MA, 1996.
+
 \bibitem{Gans1981}
 E.~Gans.
 \newblock \emph{The Origin of Language: A Formal Theory of Representation}.
 \newblock University of California Press, Berkeley, 1981.
+\newblock New edition: \emph{The Origin of Language: A New Edition}, with an
+  introduction by A.~Katz, Spuyten Duyvil, New York, 2019.
 
 \bibitem{Gans1993}
 E.~Gans.
 \newblock \emph{Originary Thinking: Elements of Generative Anthropology}.
 \newblock Stanford University Press, Stanford, 1993.
 
+\bibitem{Gans2007}
+E.~Gans.
+\newblock On firstness.
+\newblock In A.~Katz, editor, \emph{The Originary Hypothesis: A Minimal Proposal for
+  Humanistic Inquiry}, pages 45--57. The Davies Group, Aurora, CO, 2007.
+
 \bibitem{Girard1977}
 R.~Girard.
 \newblock \emph{Violence and the Sacred}.
 \newblock Translated by P.~Gregory. Johns Hopkins University Press, Baltimore, 1977.
 
-% TODO: verify this reference.
-\bibitem{Katz2007}
-A.~Katz, editor.
-\newblock \emph{The Originary Hypothesis: A Minimal Proposal for Humanistic
-  Inquiry}.
-\newblock The Davies Group, Aurora, CO, 2007.
+\bibitem{Grice1957}
+H.~P. Grice.
+\newblock Meaning.
+\newblock \emph{The Philosophical Review}, 66(3):377--388, 1957.
+
+\bibitem{Hauser2014}
+M.~D. Hauser, C.~Yang, R.~C. Berwick, I.~Tattersall, M.~J. Ryan, J.~Watumull,
+  N.~Chomsky and R.~C. Lewontin.
+\newblock The mystery of language evolution.
+\newblock \emph{Frontiers in Psychology}, 5:401, 2014.
+
+\bibitem{Hockett1960}
+C.~F. Hockett.
+\newblock The origin of speech.
+\newblock \emph{Scientific American}, September 1960.
+
+\bibitem{Katz2005}
+A.~Katz.
+\newblock Remembering Amalek: 9/11 and generative thinking.
+\newblock \emph{Anthropoetics}, X(2), Fall 2004/Winter 2005.
+
+\bibitem{Lewis1969}
+D.~Lewis.
+\newblock \emph{Convention: A Philosophical Study}.
+\newblock Harvard University Press, Cambridge, MA, 1969.
+
+\bibitem{Lyons1991}
+J.~Lyons.
+\newblock The origin of language, speech and languages.
+\newblock In \emph{Natural Language and Universal Grammar: Essays in Linguistic
+  Theory}, volume~1. Cambridge University Press, Cambridge, 1991.
+
+\bibitem{MaynardSmithPrice1973}
+J.~Maynard Smith and G.~R. Price.
+\newblock The logic of animal conflict.
+\newblock \emph{Nature}, 246:15--18, 1973.
+
+\bibitem{Morris1938}
+C.~W. Morris.
+\newblock \emph{Foundations of the Theory of Signs}.
+\newblock International Encyclopedia of Unified Science. University of Chicago Press,
+  Chicago, 1938.
+
+\bibitem{PeirceCP}
+C.~S. Peirce.
+\newblock \emph{Collected Papers of Charles Sanders Peirce}.
+\newblock Harvard University Press, Cambridge, MA. Cited by volume and paragraph.
+
+\bibitem{Sackeroff2015}
+S.~Sackeroff.
+\newblock The ends of deferral.
+\newblock \emph{Anthropoetics}, XX(2), 2015.
+
+\bibitem{Skyrms2010}
+B.~Skyrms.
+\newblock \emph{Signals: Evolution, Learning, and Information}.
+\newblock Oxford University Press, Oxford, 2010.
+
+\bibitem{StuddertKennedyTerrace2017}
+M.~Studdert-Kennedy and H.~Terrace.
+\newblock In the beginning: a review of Robert C. Berwick and Noam Chomsky's
+  \emph{Why Only Us}.
+\newblock \emph{Journal of Language Evolution}, 2(2):114--125, 2017.
+
+\bibitem{Tomasello2008}
+M.~Tomasello.
+\newblock \emph{Origins of Human Communication}.
+\newblock MIT Press, Cambridge, MA, 2008.
 
 \end{thebibliography}
 
